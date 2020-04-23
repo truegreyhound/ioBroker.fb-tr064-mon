@@ -60,7 +60,7 @@
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"
   },
-  "main": "main.js",
+  "main": "build/main.js",
   "scripts": {
     "prebuild": "rimraf ./build",
     "build:ts": "tsc -p tsconfig.build.json --listEmittedFiles",

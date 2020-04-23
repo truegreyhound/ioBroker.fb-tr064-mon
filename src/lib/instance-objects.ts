@@ -4,25 +4,98 @@ import util = require('util');
 
 import * as c from './constants';
 
-export async function setStateAsyncEx(that: any, _id: string, _value: any, _common: ioBroker.StateCommon)  {
-	//that.log.debug('setStateAsyncEx started');
+export async function setStateAsyncEx(that: any, _id: string, _value: any, _common: ioBroker.StateCommon, _setValueOnlyStateCreated: boolean = false, _setValueDelay: number = 0): Promise<boolean>  {
+	that.log.debug('setStateAsyncEx started for id "' + _id + '"; value: ' + _value  + '; common: ' + JSON.stringify(_common) + '"; _setValueOnlyStateCreated: ' + _setValueOnlyStateCreated);
+
+	let bValueChanged: boolean = false;
+
 	try {
-		await that.setObjectNotExistsAsync(_id, {
+		return await that.setObjectNotExistsAsync(_id, {
 			type: 'state',
 			common: _common,
 			native: {},
 		})
-		.then((id: string) => {
-			that.setStateAsync(id, _value, true);
-			that.log.debug('setStateAsyncEx, set "' + id + '" to "' + _value + '"');})
+		.then(async (obj: any) => {
+			that.log.debug('setStateAsyncEx, setObjectNotExistsAsync, id: ' + _id + '; obj:' + JSON.stringify(obj) + '<<<');
+			// obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr-064.0.devices.iFranks.IP"} --> created
+
+			if (((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
+				// state already exist -->  no value should be set || state new created --> set value
+				if(_setValueDelay > 0) {
+					const vOldValue:any = await that.getStateAsync(_id)
+					.then((obj:any) => {
+						that.log.debug('getStateAsyncEx, getStateAsync, obj:' + JSON.stringify(obj) + '<<<');
+
+						if(obj.val != _value) {
+							bValueChanged = true;
+
+							setTimeout(() => { 
+								that.setStateAsync(_id, _value, true);
+							}, _setValueDelay);
+						}
+					});
+				} else {
+					await that.setStateChangedAsync(_id, _value, true)
+					.then((obj:any) => {
+						that.log.debug('setStateAsyncEx, setStateChangedAsync, obj:' + JSON.stringify(obj) + '<<<');
+						// obj:{"id":"fb-tr-064.0.devices.iFranks.IP","notChanged":true}
+						
+						bValueChanged = !obj.notChanged;
+					});
+					that.log.debug('setStateAsyncEx, set "' + _id + '" to "' + _value + '"');
+					that.log.debug('setStateAsyncEx finished for id "' + _id + '" with bValueChanged: ' + bValueChanged);
+				}
+			} else {
+				that.log.debug('setStateAsyncEx finished without set value for id "' + _id + '"');
+			}
+
+			return bValueChanged;
+		})
 		.catch((e: any) => that.log.error('error on "setStateAsyncEx() for id "' + _id + '": ' + e.message));
 
 		//await that.setStateAsync(_id, _value, true);
 	} catch (e) {
 		that.log.error('error on "setStateAsyncEx()" for id "' + _id + '": ' + e.message);
+
+		return bValueChanged;
 	}
 
 } // setStateAsyncEx()
+
+
+export async function getStateValAsyncEx(that: any, _id: string, _value: any): Promise<ioBroker.State>  {
+	try {
+		return await that.getObjectAsync(_id)
+		.then(async (objState: ioBroker.Object | null | undefined) => {
+			that.log.debug('getStateValAsyncEx, getObjectAsync: ' + JSON.stringify(objState));
+
+			let dpvState: ioBroker.State = _value;
+			if(objState) {
+				const dpoState = await that.getStateAsync(objState._id);
+				that.log.debug('getStateValAsyncEx, dpoState: ' + JSON.stringify(dpoState));
+
+				if(dpoState) dpvState = dpoState.val
+			}
+
+			that.log.debug('getStateValAsyncEx, return dpvState: ' + JSON.stringify(dpvState));
+
+			return dpvState;
+		})
+		.catch((e: any) => {
+			that.log.error('error on "getStateValAsyncEx() for id "' + _id + '": ' + e.message);
+
+			return _value;
+		});
+
+	} catch (e) {
+		that.log.error('error on "getStateValAsyncEx()" for id "' + _id + '": ' + e.message);
+
+		return _value;
+	}
+
+	return _value;
+
+} // getStateValAsyncEx()
 
 
 export async function createInstanceRootObjects(that: any, table: string, tableGuest: string): Promise<void> { // this, c.HTML + c.HTML_END, c.HTML_GUEST + c.HTML_END
@@ -71,19 +144,41 @@ export async function createInstanceRootObjects(that: any, table: string, tableG
 			}
 		);
 
+		idName = c.dppDevices.substr(0, c.dppDevices.length - 1);
+		that.setObjectNotExistsAsync(
+			idName,
+			{
+				type: 'channel',
+				common: {
+					name: idName,
+					role: 'info',
+				},
+				native: {},
+			}
+		);
+		
 		const aStates = [
 			//common.type (aStatesional - (default is mixed==any type) (possible values: number, string, boolean, array, object, mixed, file)
-			['info.connection', 'state', 'connection', 'boolean', 'indicator', false, true, false, 'Fritz!Boxx connection state'],
-			['info.version', 'state', 'version', 'text', 'info', 0, true, false, 'Fritz!Box version'],
-			['info.lastUpdate', 'state', 'lastUpdate', 'number', 'date', 0, true, false, 'last connection datetime'],
-			['json', 'state', 'json', 'string', 'json', '[]', true, false, 'Json table'],
-			['html', 'state', 'html', 'string', 'html', table, true, false, 'Html table'],
-			['devices', 'state', 'devices', 'number', 'value', 0, true, false, 'Number of devices'],
-			['activeDevices', 'state', 'activeDevices', 'number', 'value', 0, true, false, 'Number of active devices'],
-			[c.dppFB_Info_SupportedFunctions + 'version', 'state', c.dppFB_Info_SupportedFunctions + 'version', 'string', 'info', '', true, false, c.dppFB_Info_SupportedFunctions + 'version'],
-			[c.dppFB_Info_SupportedFunctions + 'name', 'state', c.dppFB_Info_SupportedFunctions + 'name', 'string', 'info', '', true, false, c.dppFB_Info_SupportedFunctions + 'name']
+			['info.connection', 'state', 'connection', 'boolean', 'indicator', false, true, false, 'Fritz!Box connection state'],
+			[c.idFritzBoxVersion, 'state', c.idFritzBoxVersion, 'text', 'info', 0, true, false, 'Fritz!Box version'],
+			[c.idCountDevicesTotal, 'state', c.idCountDevicesTotal, 'number', 'value', 0, true, false, 'Number of devices'],
+			[c.idCountDevicesActive, 'state', c.idCountDevicesActive, 'number', 'value', 0, true, false, 'Number of active devices'],
+			[c.idCountDevicesActiveLAN, 'state', c.idCountDevicesActiveLAN, 'number', 'value', 0, true, false, 'Number of active LAN devices'],
+			[c.idCountDevicesActiveWLAN, 'state', c.idCountDevicesActiveWLAN, 'number', 'value', 0, true, false, 'Number of active WLAN devices'],
+			[c.idCountDevicesActiveGuests, 'state', c.idCountDevicesActiveGuests, 'number', 'value', 0, true, false, 'Number of active WLAN devices from guests'],
+			[c.idSupportedFunctions_FritzBoxVersion, 'state', c.idSupportedFunctions_FritzBoxVersion, 'string', 'info', '', true, false, 'Fritz!Box version of last check of supported functions'],
+			[c.idFritzBoxName, 'state', c.idFritzBoxName, 'string', 'info', '', true, false, 'Fritz!Box name'],
+			[c.idFritzBoxIP, 'state', c.idFritzBoxIP, 'string', 'info', '', true, false, 'Fritz!Box ip address'],
+			[c.idFritzBoxMAC, 'state', c.idFritzBoxMAC, 'string', 'info', '', true, false, 'Fritz!Box mac address'],
+			[c.idDeviceListAll_JSON, 'state', c.idDeviceListAll_JSON, 'string', 'info', '[]', true, false, 'JSON table, all devices'],
+			[c.idDeviceListInactive_JSON, 'state', c.idDeviceListInactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all inactive devices'],
+			[c.idDeviceListActive_JSON, 'state', c.idDeviceListActive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active devices'],
+			[c.idDeviceListActiveLAN_JSON, 'state', c.idDeviceListActiveLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active LAN devices'],
+			[c.idDeviceListActiveWLAN_JSON, 'state', c.idDeviceListActiveWLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active WLAN devices'],
+			[c.idDeviceListActiveGuests_JSON, 'state', c.idDeviceListActiveGuests_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active guests devices']
+			
 		];
-
+		
 		for(let i = 0; i < aStates.length; i++) { 
 			await that.setObjectNotExists(aStates[i][jStatesIndex.id], {
 				type: aStates[i][jStatesIndex.type],
@@ -107,5 +202,286 @@ export async function createInstanceRootObjects(that: any, table: string, tableG
 		that.log.error('error on "createInstanceRootObjects()"; ' + e.message);
 	}
 
-} // createInstanceRootObjects(9)
+} // createInstanceRootObjects()
 
+
+//export async function updateDevices(that: any, aCfgDevicesList: JSON[], aAllActiveDevices: JSON[]) {
+export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAllDevices: JSON[]) {
+		const fctNameId: string = 'updateDevices';
+	that.log.debug(fctNameId + ' started');
+	that.log.debug(fctNameId + ', aAllActiveDevices: ' + JSON.stringify(aAllDevices));
+
+	/* !P! 
+	Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
+	nach Durchlauf alle DPs in Liste löschen
+	*/
+	let bDataChenged: boolean = false;
+
+	aCfgDevicesList.map(function(oCfgDevice: c.IDevice) {
+		that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
+		// {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
+
+		let oDeviceData: any = {};
+		
+		if(oCfgDevice.macaddress == '') {
+			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.IPAddress === oCfgDevice.ipaddress;});
+
+			//!P! hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
+		} else {
+			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.MACAddress === oCfgDevice.macaddress;});
+		}
+
+		if (oCfgDevice.watch) {
+			// device watched, create datapoints / update value
+
+			check_set_deviceData(that, oCfgDevice, oDeviceData);
+		}
+
+		if(oCfgDevice.warn) {
+			// warn if device goes off
+			if(oCfgDevice.active != oDeviceData.Active && oDeviceData.Active == true) {
+				// device goes off
+				that.log.warn('device "' + oCfgDevice.devicename + '" goes off');
+			}
+		}
+
+		if((oDeviceData) && oDeviceData.IPAddress != oCfgDevice.ipaddress) {
+			// IP has changed
+			if(that.config.warning_destination == 'log')
+			{
+				that.log.warn('IP-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
+			}
+
+			if(that.config.warning_destination == 'telegram.0')
+			{
+				that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
+			}
+
+			// update aCfgDevicesList
+			const idx: number = aCfgDevicesList.indexOf(oCfgDevice);
+			if (idx >= 0) {
+				aCfgDevicesList[idx].ipaddress = oDeviceData.IPAddress;
+				bDataChenged = true;
+			}
+		}
+	});
+
+	if(bDataChenged) that.config.devicesList = aCfgDevicesList;
+
+	that.log.debug(fctNameId + ' finished');
+} // updateDevices()
+
+
+async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceData: any) {
+	// check data points exist: active, IP, lastIP, MAC, lastMAC, lastActive, lastInactive
+	// and update there values
+	// Wenn MAC oder IP sich ändert, Message, wenn enabled
+
+	const fctNameId: string = 'check_set_deviceData';
+	that.log.debug(fctNameId + ' started for oCfgDevice: ' + JSON.stringify(oCfgDevice) + '; oDeviceData: ' + JSON.stringify(oDeviceData));
+	//oCfgDevice: {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}; oDeviceData: undefined
+
+	try {
+		that.log.debug(fctNameId + ', create device "' + c.dppDevices + oCfgDevice.devicename + '"')
+		// create device node
+		that.setObjectNotExistsAsync(
+			c.dppDevices + oCfgDevice.devicename,
+			{
+				type: 'device',
+				common: {
+					name: oCfgDevice.devicename,
+					role: 'info',
+				},
+				native: {},
+			}
+		);
+	}  catch(err) {
+		that.log.error(fctNameId + ', error on create device for id "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
+	}
+	
+	try {
+		let idState: string = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceActive;
+		let idStateValue: any = (((oDeviceData) && (oDeviceData.Active) &&  oDeviceData.Active == 'true') ? true : false);
+		const dtCcurrent: number = new Date().getTime();
+		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue + '"; oDeviceData: ' + JSON.stringify(oDeviceData));
+
+		let bValueChanged: boolean = await setStateAsyncEx(that, idState, idStateValue, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceActive,
+			type: 'boolean',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceActive,
+		}, false, 200);		// set value with delay
+		if (bValueChanged) that.log.warn(fctNameId + ', id "' + idState + '"; set value: "' + idStateValue + '"');
+
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+		await setStateAsyncEx(that, idState, 0, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceLastActive,
+			type: 'number',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastActive,
+		}, true);	// set "0" only, if state new created
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+		await setStateAsyncEx(that, idState, 0, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceLastInactive,
+			type: 'number',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastInactive,
+		}, true);	// set "0" only, if state new created
+
+		if(bValueChanged) {
+			// value has changed
+			if(idStateValue) {
+				idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+
+				that.setStateAsync(idState, dtCcurrent);
+			} else {
+				idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+
+				that.setStateAsync(idState, dtCcurrent);
+			}
+			that.log.warn(fctNameId + ', idState "' + idState + '"; set value dtCcurrent: "' + dtCcurrent + '" (' + that.formatDate(dtCcurrent, 'YYYY.MM.DD SS:mm:ss'));
+		}
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceName;
+		setStateAsyncEx(that, idState, oCfgDevice.devicename, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceName,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceName,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceHostname;
+		setStateAsyncEx(that, idState, ((oDeviceData) ? oDeviceData.HostName : ''), {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceHostname,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceHostname,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceMAC;
+		setStateAsyncEx(that, idState, ((oDeviceData) ? oDeviceData.MACAddress : oCfgDevice.macaddress), {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceMAC,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceMAC,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastMAC;
+		setStateAsyncEx(that, idState, oCfgDevice.macaddress, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceLastMAC,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastMAC,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceIP;
+		setStateAsyncEx(that, idState, ((oDeviceData) ? oDeviceData.IPAddress : oCfgDevice.ipaddress), {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceIP,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceIP,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastIP;
+		idStateValue = oCfgDevice.ipaddress;
+		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue);
+		setStateAsyncEx(that, idState, idStateValue, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceLastIP,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastIP,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceOwner;
+		setStateAsyncEx(that, idState, oCfgDevice.ownername, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceOwner,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceOwner,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType;
+		setStateAsyncEx(that, idState, ((oDeviceData) && oDeviceData.InterfaceType != '' ? oDeviceData.InterfaceType : oCfgDevice.interfacetype), {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType,
+		});
+
+		// '{"IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"'
+		//  ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '"}';
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbPort;
+		idStateValue = ((oDeviceData) ? oDeviceData.Port : '');
+		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue);
+		setStateAsyncEx(that, idState, idStateValue, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceFbPort,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbPort,
+		});
+
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed;
+		setStateAsyncEx(that, idState, ((oDeviceData) && (oDeviceData.Speed)) ? oDeviceData.Speed : 0, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed,
+			type: 'string',
+			role: 'info',
+			def: '',
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed,
+		});
+		
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbGuest;
+		setStateAsyncEx(that, idState, (((oDeviceData) && (oDeviceData.Guest) && (oDeviceData.Guest == '1')) ? true : false), {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
+			type: 'boolean',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
+		});
+	}  catch(err) {
+		that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
+	}
+
+} // check_set_deviceData()

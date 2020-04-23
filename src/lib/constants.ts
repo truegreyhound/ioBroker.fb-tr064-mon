@@ -21,7 +21,7 @@ export const X_AVM_DE_GetSpecificHostEntryByIP = 'X_AVM-DE_GetSpecificHostEntryB
 export let supportedFunctions: string[] = [];
 
 export interface IDeviceInfo {
-	host: string;
+	hostname: string;
 	port: number;
 	sslPort: number;
 	uid: string;
@@ -39,10 +39,15 @@ export interface IAuth {
 }
 
 export interface IDevice {
-	name: string;
-	ip: string;
-	mac: string;
+	devicename: string;
+	ipaddress: string;
+	macaddress: string;
+	ownername: string;
 	active: boolean;
+	interfacetype: string;
+	warn: boolean;
+	watch: boolean;
+	guest: boolean;
 }
 
 export interface IDeviceList {
@@ -53,7 +58,39 @@ export interface IDeviceList {
 
 export const dppFB_Info = 'info.';
 export const dppFB_Info_SupportedFunctions = 'info.supportedFunction.';
+export const dppDevices = 'devices.';
 
 export const idFritzBoxVersion = dppFB_Info + 'version';
+export const idFritzBoxName = dppFB_Info + 'name';
+export const idSupportedFunctions_FritzBoxVersion = dppFB_Info + 'supportedFunction_version';
+export const idFritzBoxIP = dppFB_Info + 'fb_IP';
+export const idFritzBoxMAC = dppFB_Info + 'fb_MAC';
 
+export const idCountDevicesTotal = dppDevices + 'countDevicesTotal';
+export const idCountDevicesActive = dppDevices + 'countDevicesActive';
+export const idCountDevicesActiveLAN = dppDevices + 'countDevicesActiveLAN';
+export const idCountDevicesActiveWLAN = dppDevices + 'countDevicesActiveWLAN';
+export const idCountDevicesActiveGuests = dppDevices + 'countDevicesActiveGuests';
+
+export const idDeviceListAll_JSON = dppDevices + 'deviceListAll_JSON';
+export const idDeviceListInactive_JSON = dppDevices + 'deviceListInactive_JSON';
+export const idDeviceListActive_JSON = dppDevices + 'deviceListActive_JSON';
+export const idDeviceListActiveLAN_JSON = dppDevices + 'deviceListActiveLAN_JSON';
+export const idDeviceListActiveWLAN_JSON = dppDevices + 'deviceListActiveWLAN_JSON';
+export const idDeviceListActiveGuests_JSON = dppDevices + 'deviceListActiveGuests_JSON';
+
+export const idnDeviceActive = 'active';
+export const idnDeviceName = 'deviceName';
+export const idnDeviceHostname = 'hostName';
+export const idnDeviceIP = 'IP';
+export const idnDeviceLastIP = 'IPlast';
+export const idnDeviceMAC = 'MAC';
+export const idnDeviceLastMAC = 'MAClast';
+export const idnDeviceOwner = 'owner';
+export const idnDeviceLastActive = 'lastActive';
+export const idnDeviceLastInactive = 'lastInactive';
+export const idnDeviceInterfaceType = 'interfacetype';
+export const idnDeviceFbPort = 'port';
+export const idnDeviceFbSpeed = 'speed';
+export const idnDeviceFbGuest = 'guest';
 

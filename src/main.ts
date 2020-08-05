@@ -115,7 +115,7 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 			const oCfgData: c.IDevice = <c.IDevice>that.config.devicesList.find(function (item: any) { return item.macaddress === oDevice.MACAddress;});
 			that.log.debug(fctName + ', oCfgData: ' + JSON.stringify(oCfgData));
 
-			if(oDevice.HostName == 'FB2') {
+			if(oDevice.IPAddress == that.config.fb_ip) {
 				// self
 				that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
 				that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);

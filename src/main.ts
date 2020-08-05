@@ -107,8 +107,14 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 
 		const sDeviceExt: string = ', "InterfaceType": "", "Port": "", "Speed": "0"}';
 
+		// reset status
+		that.setStateChangedAsync(c.idDeviceList_IPChanged, false);
+		that.setStateChangedAsync(c.idDeviceList_OwnerChanged, false);
+		that.setStateChangedAsync(c.idDeviceList_WarnChanged, false);
+		that.setStateChangedAsync(c.idDeviceList_WatchChanged, false);
+
 		aDevices.map(function(oDevice: any) {
-			that.log.debug(fctName + ', oDevice: ' + JSON.stringify(oDevice));
+			that.log.debug(fctName + ', fb_ip: ' + JSON.stringify(that.config.fb_ip) + '; oDevice: ' + JSON.stringify(oDevice));
 			//!P!that.log.debug(fctName + ' oDevice.HostName: ' + oDevice.HostName + '; mFbClass.name: ' + mFbClass.name);
 			// oDevice.HostName: sony-player; mFbClass.name: 
 
@@ -121,14 +127,15 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 				that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
 			} else {
 				let sDevice: string = '{"Active": "' + (oDevice.Active  == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"'
-				
-				if(oCfgData.warn == true) aDeviceList_Warn.push(JSON.parse(sDevice));
+				that.log.debug(fctName + ', sDevice: ' + sDevice);
+
+				if(oCfgData.warn === true) aDeviceList_Warn.push(JSON.parse(sDevice + '}'));
 
 				if (oDevice.Active == "0") {		// inactive
 					aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
 					maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
 
-					if(oCfgData.warn == true) aDeviceList_Warn_inactive.push(JSON.parse(sDevice));
+					if(oCfgData.warn === true) aDeviceList_Warn_inactive.push(JSON.parse(sDevice + '}'));
 				} else {
 					// device active
 					sDevice += ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '", "Guest": "' + oDevice['X_AVM-DE_Guest'] + '"}';
@@ -139,7 +146,7 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 					if(oDevice.InterfaceType == 'Ethernet') aAllActiveLANDevices.push(JSON.parse(sDevice));
 					if(oDevice.InterfaceType == '802.11') aAllActiveWLANDevices.push(JSON.parse(sDevice));
 					if(oDevice.Guest == '1') aAllActiveGuestsDevices.push(JSON.parse(sDevice));
-					if(oCfgData.warn == true) aDeviceList_Warn_active.push(JSON.parse(sDevice));
+					if(oCfgData.warn === true) aDeviceList_Warn_active.push(JSON.parse(sDevice));
 				}
 			}
 		});

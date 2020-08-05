@@ -6,7 +6,7 @@
 		"checkJs": false,
 		"noEmit": false,
 		"declaration": false,
-		"rootDir": "./src"
+		//"rootDir": "./src"
 	},
 	"include": [
 		"src/**/*.ts"

@@ -79,6 +79,15 @@ export const idDeviceListActiveLAN_JSON = dppDevices + 'deviceListActiveLAN_JSON
 export const idDeviceListActiveWLAN_JSON = dppDevices + 'deviceListActiveWLAN_JSON';
 export const idDeviceListActiveGuests_JSON = dppDevices + 'deviceListActiveGuests_JSON';
 
+export const idDeviceList_Warn_JSON = dppDevices + 'deviceList_warn_JSON';
+export const idDeviceList_Warn_active_JSON = dppDevices + 'deviceList_warn_active_JSON';
+export const idDeviceList_Warn_inactive_JSON = dppDevices + 'deviceList_warn_inactive_JSON';
+
+export const idDeviceList_IPChanged = dppDevices + 'deviceList_ip_changed';			// IP
+export const idDeviceList_OwnerChanged = dppDevices + 'deviceList_owner_changed';	// owner
+export const idDeviceList_WarnChanged = dppDevices + 'deviceList_warn_changed';		// warn
+export const idDeviceList_WatchChanged = dppDevices + 'deviceList_watch_changed';	// watch
+
 export const idnDeviceActive = 'active';
 export const idnDeviceName = 'deviceName';
 export const idnDeviceHostname = 'hostName';
@@ -93,4 +102,5 @@ export const idnDeviceInterfaceType = 'interfacetype';
 export const idnDeviceFbPort = 'port';
 export const idnDeviceFbSpeed = 'speed';
 export const idnDeviceFbGuest = 'guest';
-
+export const idnDeviceFbWarn = 'warn';
+export const idnDeviceFbWatch = 'watch';

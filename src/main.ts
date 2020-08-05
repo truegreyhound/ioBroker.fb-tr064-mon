@@ -7,6 +7,12 @@
  */
 
 /* !P!
+device K3 D8:50:E6:D3:07:87 192.168.200.109 > wird interface Ethernet nicht entfern, obwohl nicht im Netz
+IP-address for device "influx-01" changed (old: "192.168.200.105"; new: "192.168.200.107"; MAC: "90:1B:0E:BA:80:82" > kann es sein, dass das intern nicht aktualisiert wird?  IPlast
+
+Was wenn angelegtes device watch deaktiviert wird? Properties watch und warn als DP und diesen dann auf FALSE?? oder DP löschen?
+
+
 	Option in Konfigurationsseite, ob aktuelle Uhrzeit für lastActive/lastInactive bei Neuanlage eines Gerätes genommen werden soll, 0 ist wahrscheinlich bresser/eindeutig
 	Option in Konfigurationsseite, ob aus der Überwachung fallende Geräte gelöscht werden sollen
 	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
@@ -14,7 +20,7 @@
 */
 
 /* !I!
-	"Friend" ist der festgelegte Ownername für Geräte der freunde.
+	"Friend" ist der festgelegte Ownername für Geräte der Freunde.
 */
 
 
@@ -42,6 +48,7 @@ import Flatted = require('flatted');
 let maAllDevices: JSON[] = [];
 let mScheduleStatus: any = null;
 let mFbClass: mFb.Fb;
+
 
 async function getDeviceList(that: any, cfg: any, Fb: mFb.Fb): Promise<any> {
 	const fctName: string = 'getDeviceList';
@@ -92,6 +99,9 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 		let aAllActiveWLANDevices: JSON[] = [];
 		let aAllActiveGuestsDevices: JSON[] = [];
 		let aAllInactiveDevices: JSON[] = [];
+		let aDeviceList_Warn: JSON[] = [];
+		let aDeviceList_Warn_active: JSON[] = [];
+		let aDeviceList_Warn_inactive: JSON[] = [];
 
 		maAllDevices = [];
 
@@ -102,6 +112,9 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 			//!P!that.log.debug(fctName + ' oDevice.HostName: ' + oDevice.HostName + '; mFbClass.name: ' + mFbClass.name);
 			// oDevice.HostName: sony-player; mFbClass.name: 
 
+			const oCfgData: c.IDevice = <c.IDevice>that.config.devicesList.find(function (item: any) { return item.macaddress === oDevice.MACAddress;});
+			that.log.debug(fctName + ', oCfgData: ' + JSON.stringify(oCfgData));
+
 			if(oDevice.HostName == 'FB2') {
 				// self
 				that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
@@ -109,9 +122,13 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 			} else {
 				let sDevice: string = '{"Active": "' + (oDevice.Active  == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"'
 				
+				if(oCfgData.warn == true) aDeviceList_Warn.push(JSON.parse(sDevice));
+
 				if (oDevice.Active == "0") {		// inactive
 					aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
 					maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
+
+					if(oCfgData.warn == true) aDeviceList_Warn_inactive.push(JSON.parse(sDevice));
 				} else {
 					// device active
 					sDevice += ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '", "Guest": "' + oDevice['X_AVM-DE_Guest'] + '"}';
@@ -122,6 +139,7 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 					if(oDevice.InterfaceType == 'Ethernet') aAllActiveLANDevices.push(JSON.parse(sDevice));
 					if(oDevice.InterfaceType == '802.11') aAllActiveWLANDevices.push(JSON.parse(sDevice));
 					if(oDevice.Guest == '1') aAllActiveGuestsDevices.push(JSON.parse(sDevice));
+					if(oCfgData.warn == true) aDeviceList_Warn_active.push(JSON.parse(sDevice));
 				}
 			}
 		});
@@ -134,6 +152,10 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 		that.setStateChangedAsync(c.idDeviceListActiveWLAN_JSON, JSON.stringify(aAllActiveWLANDevices));
 		that.setStateChangedAsync(c.idDeviceListActiveGuests_JSON, JSON.stringify(aAllActiveGuestsDevices));
 
+		that.setStateChangedAsync(c.idDeviceList_Warn_JSON, JSON.stringify(aDeviceList_Warn));
+		that.setStateChangedAsync(c.idDeviceList_Warn_active_JSON, JSON.stringify(aDeviceList_Warn_active));
+		that.setStateChangedAsync(c.idDeviceList_Warn_inactive_JSON, JSON.stringify(aDeviceList_Warn_inactive));
+
 		that.setStateChangedAsync(c.idCountDevicesTotal, maAllDevices.length);
 		that.setStateChangedAsync(c.idCountDevicesActive, aAllActiveDevices.length);
 		that.setStateChangedAsync(c.idCountDevicesActiveLAN, aAllActiveLANDevices.length);
@@ -141,13 +163,18 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 		//that.log.debug(fctName + ', aAllActiveGuestsDevices.length: ' + JSON.stringify(aAllActiveGuestsDevices.length));
 		that.setStateChangedAsync(c.idCountDevicesActiveGuests, aAllActiveGuestsDevices.length);
 
+		that.setStateChangedAsync(c.idDeviceList_IPChanged, (that.config.devicesList_IPChanged) ? that.config.devicesList_IPChanged : false);
+		that.setStateChangedAsync(c.idDeviceList_OwnerChanged, (that.config.devicesList_OwnerChanged) ? that.config.devicesList_OwnerChanged : false);
+		that.setStateChangedAsync(c.idDeviceList_WarnChanged, (that.config.devicesList_WarnChanged) ? that.config.devicesList_WarnChanged : false);
+		that.setStateChangedAsync(c.idDeviceList_WatchChanged, (that.config.devicesList_WatchChanged) ? that.config.devicesList_WatchChanged : false);
+		
 //!P! ggf. DP for lastRun
 
         //!P!that.setState('info.connection', { val: true, ack: true });
         that.setState('info.connection', true, true);
 
 	}  catch (e) {
-		//!P! showError(fctName + ': '+e.message);
+		//!P! showError(fctName + ': ' + e.message);
 		that.log.error(fctName + ': ' + e.message);
 	}
 
@@ -296,7 +323,7 @@ class FbTr064 extends utils.Adapter {
 			this.log.debug('updateDevicesStatus, items: ' + JSON.stringify(items));
 
 			if (items) {
-				// spliit and write in data points
+				// splitt and write in data points
 				createDeviceStatusLists(this, items);
 			}
 			
@@ -451,6 +478,7 @@ class FbTr064 extends utils.Adapter {
 						if (mScheduleStatus) clearInterval(mScheduleStatus);
 						mScheduleStatus = null;
 			
+						// create new list for adapter configuration
 						let aNewCfgDevicesList: c.IDeviceList = { devices: [], onlyActive: false, error: undefined};
 						
 						const that = this;
@@ -485,7 +513,9 @@ class FbTr064 extends utils.Adapter {
 						return true;
 						break;
 					}
-					case 'updateDevicesStatus': 
+					case 'updateDevicesStatus':
+						// save executed in configuration form
+
 						this.updateDevicesStatus();
 
 						break;
@@ -505,7 +535,8 @@ class FbTr064 extends utils.Adapter {
 		}
 	}
 
-}
+} // onMessage()
+
 
 function getJsonArrayItemByMAC(aJson: JSON[], sMAC: string): JSON | undefined {
 	//return !!adapter.config.devices.find(function (v) { return v.mac === mac;} );

@@ -175,7 +175,14 @@ export async function createInstanceRootObjects(that: any, table: string, tableG
 			[c.idDeviceListActive_JSON, 'state', c.idDeviceListActive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active devices'],
 			[c.idDeviceListActiveLAN_JSON, 'state', c.idDeviceListActiveLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active LAN devices'],
 			[c.idDeviceListActiveWLAN_JSON, 'state', c.idDeviceListActiveWLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active WLAN devices'],
-			[c.idDeviceListActiveGuests_JSON, 'state', c.idDeviceListActiveGuests_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active guests devices']
+			[c.idDeviceListActiveGuests_JSON, 'state', c.idDeviceListActiveGuests_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active guests devices'],
+			[c.idDeviceList_Warn_JSON, 'state', c.idDeviceList_Warn_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched devices'],
+			[c.idDeviceList_Warn_active_JSON, 'state', c.idDeviceList_Warn_active_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched active devices'],
+			[c.idDeviceList_Warn_inactive_JSON, 'state', c.idDeviceList_Warn_inactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched inactive devices'],
+			[c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'any confiuration data have been changed'],
+			[c.idDeviceList_OwnerChanged, 'state', c.idDeviceList_OwnerChanged, 'boolean', 'info', false, true, false, 'owner name has changed'],
+			[c.idDeviceList_WarnChanged, 'state', c.idDeviceList_WarnChanged, 'boolean', 'info', false, true, false, 'warn state has changed'],
+			[c.idDeviceList_WatchChanged, 'state', c.idDeviceList_WatchChanged, 'boolean', 'info', false, true, false, 'watch state has changed']
 			
 		];
 		
@@ -215,13 +222,26 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 	Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
 	nach Durchlauf alle DPs in Liste löschen
 	*/
-	let bDataChenged: boolean = false;
+	let bDataChangedIP: boolean = false;
+	let bDataChangedOwner: boolean = false;
+	let bDataChangedWarn: boolean = false;
+	let bDataChangedWatch: boolean = false;
 
+	let aCfgDevicesListOld = that.config.devicesListOld;
+	that.log.debug(fctNameId + ', aCfgDevicesListOld: ' + JSON.stringify(aCfgDevicesListOld));
+
+	if (!aCfgDevicesListOld) {
+		aCfgDevicesListOld = aCfgDevicesList;
+	}
+	
 	aCfgDevicesList.map(function(oCfgDevice: c.IDevice) {
 		that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
 		// {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
 
 		let oDeviceData: any = {};
+		const oCfgDeviceOld: c.IDevice = aCfgDevicesListOld.find(function (item: any) { return item.macaddress === oCfgDevice.macaddress;});
+		
+		that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
 		
 		if(oCfgDevice.macaddress == '') {
 			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.IPAddress === oCfgDevice.ipaddress;});
@@ -245,28 +265,50 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 			}
 		}
 
-		if((oDeviceData) && oDeviceData.IPAddress != oCfgDevice.ipaddress) {
-			// IP has changed
-			if(that.config.warning_destination == 'log')
-			{
-				that.log.warn('IP-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
+		if (oDeviceData) {
+			if (oDeviceData.IPAddress != oCfgDevice.ipaddress) {
+				// IP has changed
+				if(that.config.warning_destination == 'log')
+				{
+					that.log.warn('IP-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
+				}
+
+				if(that.config.warning_destination == 'telegram.0')
+				{
+					that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
+				}
+
+				// update aCfgDevicesList
+				const idx: number = aCfgDevicesList.indexOf(oCfgDevice);
+				if (idx >= 0) {
+					aCfgDevicesList[idx].ipaddress = oDeviceData.IPAddress;
+					bDataChangedIP = true;
+				}
 			}
 
-			if(that.config.warning_destination == 'telegram.0')
-			{
-				that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
+			if (oCfgDeviceOld.ownername != oCfgDevice.ownername) {
+				// owner has changed
+				bDataChangedOwner = true;
 			}
-
-			// update aCfgDevicesList
-			const idx: number = aCfgDevicesList.indexOf(oCfgDevice);
-			if (idx >= 0) {
-				aCfgDevicesList[idx].ipaddress = oDeviceData.IPAddress;
-				bDataChenged = true;
+			if (oCfgDeviceOld.warn != oCfgDevice.warn) {
+				// warn has changed
+				bDataChangedWarn = true;
+			}
+			if (oCfgDeviceOld.watch != oCfgDevice.watch) {
+				// watch has changed
+				bDataChangedWatch = true;
 			}
 		}
 	});
 
-	if(bDataChenged) that.config.devicesList = aCfgDevicesList;
+	//bDataChenged --> bDataChanged als Parameter in that.config.devicesList_IPChanged = bDataChanged
+	if(bDataChangedIP) that.config.devicesList = aCfgDevicesList;
+	that.config.devicesList_IPChanged = bDataChangedIP;
+	that.config.devicesList_OwnerChanged = bDataChangedOwner;
+	that.config.devicesList_WarnChanged = bDataChangedWarn;
+	that.config.devicesList_WatchChanged = bDataChangedWatch;
+
+	that.config.devicesListOld = that.config.devicesList;
 
 	that.log.debug(fctNameId + ' finished');
 } // updateDevices()
@@ -479,6 +521,28 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 			read: true,
 			write: false,
 			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
+		});
+		
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
+		setStateAsyncEx(that, idState, oCfgDevice.warn, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
+			type: 'boolean',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
+		});
+		
+		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbWatch;
+		setStateAsyncEx(that, idState, oCfgDevice.watch, {
+			name: oCfgDevice.devicename + '.' + c.idnDeviceFbWatch,
+			type: 'boolean',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbWatch,
 		});
 	}  catch(err) {
 		that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)

@@ -28,7 +28,7 @@
 		// "noUnusedParameters": true,
 
 		// Consider targetting es2017 or higher if you require the new NodeJS 8+ features
-		"target": "es2015",
+		"target": "es2017",
 
 		"sourceMap": true,
 		"inlineSourceMap": false,
@@ -42,5 +42,6 @@
 		"node_modules/**",
 		"admin/**",
 		"src/SampleFromObject.json"
+		//"**/__tests__/*"
 	]
 }

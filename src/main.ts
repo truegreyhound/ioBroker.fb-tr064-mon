@@ -3,7 +3,7 @@
 'use strict';
 
 /*
- * Created with @iobroker/create-adapter v1.21.0
+ * Created with @iobroker/create-adapter v1.22.0
  */
 
 /* !P!
@@ -20,7 +20,10 @@ Was wenn angelegtes device watch deaktiviert wird? Properties watch und warn als
 */
 
 /* !I!
-	"Friend" ist der festgelegte Ownername für Geräte der Freunde.
+	"Friend" ist der festgelegte Ownername für Geräte der Freunde. guest für Geräte der Gäste
+	
+	Wir der "device name" in der Adapterkonfiguration geändert, wird das Geräte unter diesem Namen neu angelegt, die Datenstruktur unter dem alten Namen bleibt erhalten und muss manuell gelöscht werden.
+	Außerdem sind ggf. weitere Konfigurationen zu setzen (eenum functions (presence_device), etc.)
 */
 
 

@@ -3,26 +3,32 @@
 'use strict';
 
 /*
- * Created with @iobroker/create-adapter v1.22.0
+ * Created with @iobroker/create-adapter v1.28.0
  */
 
 /* !P!
-device K3 D8:50:E6:D3:07:87 192.168.200.109 > wird interface Ethernet nicht entfern, obwohl nicht im Netz
+device K3 D8:50:E6:D3:07:87 192.168.200.109 > wird interface Ethernet nicht entfernt, obwohl nicht im Netz
 IP-address for device "influx-01" changed (old: "192.168.200.105"; new: "192.168.200.107"; MAC: "90:1B:0E:BA:80:82" > kann es sein, dass das intern nicht aktualisiert wird?  IPlast
 
-Was wenn angelegtes device watch deaktiviert wird? Properties watch und warn als DP und diesen dann auf FALSE?? oder DP löschen?
+Was wenn angelegtes device watch und warn deaktiviert werden? Device löschen? --> b)
 
 
-	Option in Konfigurationsseite, ob aktuelle Uhrzeit für lastActive/lastInactive bei Neuanlage eines Gerätes genommen werden soll, 0 ist wahrscheinlich bresser/eindeutig
-	Option in Konfigurationsseite, ob aus der Überwachung fallende Geräte gelöscht werden sollen
-	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
-	Option in der Liste, ob bei einem Gerät, das Offline geht, eine Warnung gesendet/geloggt werden soll, unabhängig ob das Gerät Überwacht (watched) wird
+a)	Option in Konfigurationsseite, ob aktuelle Uhrzeit für lastActive/lastInactive bei Neuanlage eines Gerätes genommen werden soll, 0 ist wahrscheinlich bresser/eindeutig
+b)	Option in Konfigurationsseite, ob aus der Überwachung fallende Geräte gelöscht werden sollen
+c)	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
 */
 
 /* !I!
+	deviceName	- Name aus der Adapterkonfiguration == Name des Datenpunktes des Gerätes
+	hostName	- Name des Gerätes aus der Fritz!Box
+
 	"Friend" ist der festgelegte Ownername für Geräte der Freunde. guest für Geräte der Gäste
-	
-	Wir der "device name" in der Adapterkonfiguration geändert, wird das Geräte unter diesem Namen neu angelegt, die Datenstruktur unter dem alten Namen bleibt erhalten und muss manuell gelöscht werden.
+
+	Adapterkonfiguration
+		Spalte watch - für dieses Geräte werden DPs angelegt
+		Spalte warn  - geht das Geräte Offline, wird eine Warnung an den konfigurierten Sender gesendet (Off, Log, Telegram)
+
+	Wird der "device name" in der Adapterkonfiguration geändert, wird das Geräte unter diesem Namen neu angelegt, die Datenstruktur unter dem alten Namen bleibt erhalten und muss manuell gelöscht werden.
 	Außerdem sind ggf. weitere Konfigurationen zu setzen (eenum functions (presence_device), etc.)
 */
 
@@ -35,9 +41,9 @@ import * as utils from '@iobroker/adapter-core';
 // import * as fs from 'fs';
 // load your modules here, e.g.:
 
-import util = require('util');
-import dateFormat = require('dateformat');
-import {parse, stringify} from 'flatted';
+//!P!import util = require('util');
+//!P!import dateFormat = require('dateformat');
+//!P!import {parse, stringify} from 'flatted';
 
 //own libraries
 import * as c from './lib/constants';
@@ -45,17 +51,20 @@ import * as mFb from './lib/fb';
 //import mFb = require('./lib/fb');
 import mFbObj = require('./lib/instance-objects');
 import { adapter } from '@iobroker/adapter-core';
-import Flatted = require('flatted');
+//!P!import Flatted = require('flatted');
 
 
 let maAllDevices: JSON[] = [];
 let mScheduleStatus: any = null;
 let mFbClass: mFb.Fb;
 
-
+/*
+	get the list with devices from the box
+*/
 async function getDeviceList(that: any, cfg: any, Fb: mFb.Fb): Promise<any> {
 	const fctName: string = 'getDeviceList';
 	that.log.debug(fctName + ' started');
+	that.log.debug(fctName + ', cfg: ' + JSON.stringify(cfg));
 
 	try {
 		//get device list
@@ -91,6 +100,14 @@ async function getDeviceList(that: any, cfg: any, Fb: mFb.Fb): Promise<any> {
 
 } // getDeviceList()
 
+/*
+	createDeviceStatusLists(that: any, aDevices: any)
+	that		- adapter context
+	aDevices	- array with devices from the Fritz!Box
+
+	liest die
+
+*/
 
 function createDeviceStatusLists(that: any, aDevices: any) {
 	const fctName: string = 'createDeviceStatusLists';
@@ -105,6 +122,9 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 		let aDeviceList_Warn: JSON[] = [];
 		let aDeviceList_Warn_active: JSON[] = [];
 		let aDeviceList_Warn_inactive: JSON[] = [];
+		let aNewDevices: JSON[] = [];
+		
+		let aAllConfiguredDevices: c.IDevice[] = that.config.devicesList;
 
 		maAllDevices = [];
 
@@ -116,40 +136,57 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 		that.setStateChangedAsync(c.idDeviceList_WarnChanged, false);
 		that.setStateChangedAsync(c.idDeviceList_WatchChanged, false);
 
+		// map - Methode wendet auf jedes Element des Arrays die bereitgestellte Funktion an und gibt das Ergebnis in einem neuen Array zurück.
+		// d. h., dass hier manipulierte Element oDevice wird hier zum neuen Element in aDevices
 		aDevices.map(function(oDevice: any) {
 			that.log.debug(fctName + ', fb_ip: ' + JSON.stringify(that.config.fb_ip) + '; oDevice: ' + JSON.stringify(oDevice));
 			//!P!that.log.debug(fctName + ' oDevice.HostName: ' + oDevice.HostName + '; mFbClass.name: ' + mFbClass.name);
 			// oDevice.HostName: sony-player; mFbClass.name: 
 
+			// get configured parameter for device like macaddress, watch, warn, ...
 			const oCfgData: c.IDevice = <c.IDevice>that.config.devicesList.find(function (item: any) { return item.macaddress === oDevice.MACAddress;});
 			that.log.debug(fctName + ', oCfgData: ' + JSON.stringify(oCfgData));
 
-			if(oDevice.IPAddress == that.config.fb_ip) {
-				// self
-				that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
-				that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
-			} else {
-				let sDevice: string = '{"Active": "' + (oDevice.Active  == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"'
-				that.log.debug(fctName + ', sDevice: ' + sDevice);
+			if (oCfgData) {
+				// known device in adapter config, remove from known list
+				aAllConfiguredDevices.splice(aAllConfiguredDevices.findIndex(item => item.macaddress === oDevice.MACAddress), 1)
 
-				if(oCfgData.warn === true) aDeviceList_Warn.push(JSON.parse(sDevice + '}'));
-
-				if (oDevice.Active == "0") {		// inactive
-					aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
-					maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
-
-					if(oCfgData.warn === true) aDeviceList_Warn_inactive.push(JSON.parse(sDevice + '}'));
+				if(oDevice.IPAddress == that.config.fb_ip) {
+					// self
+					that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
+					that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
 				} else {
-					// device active
-					sDevice += ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '", "Guest": "' + oDevice['X_AVM-DE_Guest'] + '"}';
+					let sDevice: string = '{"Active": "' + (oDevice.Active  == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"';
+					that.log.debug(fctName + ', sDevice: ' + sDevice);
 
-					maAllDevices.push(JSON.parse(sDevice));
-					aAllActiveDevices.push(JSON.parse(sDevice));
+					if(oCfgData.warn === true) aDeviceList_Warn.push(JSON.parse(sDevice + '}'));
 
-					if(oDevice.InterfaceType == 'Ethernet') aAllActiveLANDevices.push(JSON.parse(sDevice));
-					if(oDevice.InterfaceType == '802.11') aAllActiveWLANDevices.push(JSON.parse(sDevice));
-					if(oDevice.Guest == '1') aAllActiveGuestsDevices.push(JSON.parse(sDevice));
-					if(oCfgData.warn === true) aDeviceList_Warn_active.push(JSON.parse(sDevice));
+					if (oDevice.Active == "0") {		// inactive
+						aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
+						maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
+
+						if(oCfgData.warn === true) aDeviceList_Warn_inactive.push(JSON.parse(sDevice + '}'));
+					} else {
+						// device active
+						sDevice += ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '", "Guest": "' + oDevice['X_AVM-DE_Guest'] + '"}';
+
+						maAllDevices.push(JSON.parse(sDevice));
+						aAllActiveDevices.push(JSON.parse(sDevice));
+
+						if(oDevice.InterfaceType == 'Ethernet') aAllActiveLANDevices.push(JSON.parse(sDevice));
+						if(oDevice.InterfaceType == '802.11') aAllActiveWLANDevices.push(JSON.parse(sDevice));
+						if(oDevice.Guest == '1') aAllActiveGuestsDevices.push(JSON.parse(sDevice));
+						if(oCfgData.warn === true) aDeviceList_Warn_active.push(JSON.parse(sDevice));
+					}
+				}
+			} else {
+				if(oDevice.IPAddress !== that.config.fb_ip) {
+					// new device without adapter config
+					let sDevice: string = '{"Active": "' + (oDevice.Active  == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"}';
+					let sDeviceMsg: string = 'HostName: "' + oDevice.HostName + '"; MACAddress: "' + oDevice.MACAddress + '"; IPAddress: "' + oDevice.IPAddress + '";  active: ' + (oDevice.Active  == '1' ? true : false);
+					that.log.warn('New device detected,  ' + sDeviceMsg);
+
+					aNewDevices.push(JSON.parse(sDevice));
 				}
 			}
 		});
@@ -178,6 +215,23 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 		that.setStateChangedAsync(c.idDeviceList_WarnChanged, (that.config.devicesList_WarnChanged) ? that.config.devicesList_WarnChanged : false);
 		that.setStateChangedAsync(c.idDeviceList_WatchChanged, (that.config.devicesList_WatchChanged) ? that.config.devicesList_WatchChanged : false);
 		
+		that.setStateChangedAsync(c.idDeviceList_NewAddedDevices_JSON,  JSON.stringify(aNewDevices));
+
+		if (aAllConfiguredDevices.length > 0) {
+			//!P!that.log.warn('Following known devices removed from Fritz!Box network list: ' + JSON.stringify(aAllConfiguredDevices));
+
+			aAllConfiguredDevices.map(function(oDevice: c.IDevice) {
+				that.log.debug(fctName + ', oDevice: ' + JSON.stringify(oDevice));
+
+				let sDevice: string = '{"Active": "' + false + '", "IPAddress": "' + oDevice.ipaddress + '", "MACAddress": "' + oDevice.macaddress + '", "HostName": "' + oDevice.devicename + '"}';
+				that.log.debug(fctName + ', sDevice: ' + sDevice);
+
+				if (oDevice.warn) that.log.warn(fctName + ', following device removed from Fritz!Box network list: ' + JSON.stringify(sDevice));
+			});
+		}
+		that.setStateChangedAsync(c.idDeviceList_RemovedDevices_JSON,  JSON.stringify(aAllConfiguredDevices));
+
+
 //!P! ggf. DP for lastRun
 
         //!P!that.setState('info.connection', { val: true, ack: true });
@@ -277,7 +331,8 @@ class FbTr064 extends utils.Adapter {
 				this.log.debug('onReady, jDeviceInfo: ' + JSON.stringify(jDeviceInfo));
 
 				//Create global objects
-				await mFbObj.createInstanceRootObjects(this, c.HTML + c.HTML_END, c.HTML_GUEST + c.HTML_END);
+//!P!				await mFbObj.createInstanceRootObjects(this, c.HTML + c.HTML_END, c.HTML_GUEST + c.HTML_END);
+				await mFbObj.createInstanceRootObjects(this);
 
 				// get new Fb instance
 				mFbClass = new mFb.Fb(jDeviceInfo, this);
@@ -373,7 +428,7 @@ class FbTr064 extends utils.Adapter {
 	/**
 	 * Is called if a subscribed object changes
 	 */
-	private onObjectChange(id: string, obj: ioBroker.Object | null | undefined): void {
+/*	private onObjectChange(id: string, obj: ioBroker.Object | null | undefined): void {
 		if (obj) {
 			// The object was changed
 			this.log.info(`object ${id} changed: ${JSON.stringify(obj)}`);
@@ -382,6 +437,7 @@ class FbTr064 extends utils.Adapter {
 			this.log.info(`object ${id} deleted`);
 		}
 	}
+*/
 
 	/**
 	 * Is called if a subscribed state changes
@@ -397,7 +453,7 @@ class FbTr064 extends utils.Adapter {
 		const fctName: string = 'subscription stateChange';
 		let fctNameId: string = '';
 
-		const that = this;
+		//!P!const that = this;
 
 		if (state) {
 			//  && !state.ack
@@ -550,7 +606,7 @@ class FbTr064 extends utils.Adapter {
 
 function getJsonArrayItemByMAC(aJson: JSON[], sMAC: string): JSON | undefined {
 	//return !!adapter.config.devices.find(function (v) { return v.mac === mac;} );
-	const fctName: string = 'getJsonArrayItemByMAC';
+	//!P!const fctName: string = 'getJsonArrayItemByMAC';
 	//!P! item['xx'], attribute Name als Parameter übergeben
 
 	return <JSON>aJson.find(function (item: any) { return item.macaddress === sMAC;} );

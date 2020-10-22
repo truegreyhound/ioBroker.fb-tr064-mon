@@ -1,4 +1,52 @@
 {
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"eslint.enable": true
+	"funcList": {
+	
+		"doubleSpacing": false,
+		"filters": [
+			{
+				"extensions": [
+					".c",
+					".h"
+				],
+				"native": "/^[a-z]+\\s+\\w+\\(/mgi",
+				"display": "/\\S* +(\\w+)/1",
+				"sort": 0
+			},
+			{
+				"extensions": [
+					".cpp",
+					".hpp"
+				],
+				"native": "/(?:^\\w+\\s+|^)\\w+[:]*\\w+\\(/mgi",
+				"display": "/[\\S ]+(\\w+)/",
+				"sort": 0
+			},
+			{
+				"extensions": [
+					".ts",
+					".php"
+				],
+				"native": "/(?:^|\\s)function\\s+\\w+\\(/mg",
+				"display": "/\\s*function\\s+(\\w+)/1",
+				"sort": 0
+			},
+			{
+				"extensions": [
+					".asm"
+				],
+				"native": "/^\\w+:\\s*$/mg",
+				"display": "/\\w+/",
+				"sort": 0
+			},
+			{
+				"extensions": [
+					".ps1"
+				],
+				"native": "/function\\s+\\w+-?\\w*\\s*{/img",
+				"display": "/function\\s+(\\w+-?\\w*)/1i",
+				"sort": 0
+			}
+		]
+	}
 }

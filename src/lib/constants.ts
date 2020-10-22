@@ -79,6 +79,9 @@ export const idDeviceListActiveLAN_JSON = dppDevices + 'deviceListActiveLAN_JSON
 export const idDeviceListActiveWLAN_JSON = dppDevices + 'deviceListActiveWLAN_JSON';
 export const idDeviceListActiveGuests_JSON = dppDevices + 'deviceListActiveGuests_JSON';
 
+export const idDeviceList_NewAddedDevices_JSON = dppDevices + 'deviceList_NewAddedDevices_JSON';
+export const idDeviceList_RemovedDevices_JSON = dppDevices + 'deviceList_RemovedDevices_JSON';
+
 export const idDeviceList_Warn_JSON = dppDevices + 'deviceList_warn_JSON';
 export const idDeviceList_Warn_active_JSON = dppDevices + 'deviceList_warn_active_JSON';
 export const idDeviceList_Warn_inactive_JSON = dppDevices + 'deviceList_warn_inactive_JSON';

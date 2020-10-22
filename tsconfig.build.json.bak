@@ -2,18 +2,17 @@
 	"extends": "./tsconfig.json",
 	// Modified config to only compile .ts-files in the src dir
 	"compilerOptions": {
+		"allowJs": false,
+		"checkJs": false,
 		"noEmit": false,
-
 		"declaration": false,
-		"rootDir": "./src"
+		//"rootDir": "./src"
 	},
 	"include": [
 		"src/**/*.ts"
 	],
 	"exclude": [
 		"src/**/*.test.ts",
-		"src/SampleFromObject.json",
-		"build/**",
-		"node_modules/**"
+		"src/SampleFromObject.json"
 	]
 }

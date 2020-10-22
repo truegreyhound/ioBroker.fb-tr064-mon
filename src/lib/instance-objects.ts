@@ -22,7 +22,7 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 			if (((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
 				// state already exist -->  no value should be set || state new created --> set value
 				if(_setValueDelay > 0) {
-					const vOldValue:any = await that.getStateAsync(_id)
+					await that.getStateAsync(_id)
 					.then((obj:any) => {
 						that.log.debug('getStateAsyncEx, getStateAsync, obj:' + JSON.stringify(obj) + '<<<');
 
@@ -98,8 +98,9 @@ export async function getStateValAsyncEx(that: any, _id: string, _value: any): P
 } // getStateValAsyncEx()
 
 
-export async function createInstanceRootObjects(that: any, table: string, tableGuest: string): Promise<void> { // this, c.HTML + c.HTML_END, c.HTML_GUEST + c.HTML_END
-	that.log.debug('createInstanceRootObjects started');
+//!P!export async function createInstanceRootObjects(that: any, table: string, tableGuest: string): Promise<void> { // this, c.HTML + c.HTML_END, c.HTML_GUEST + c.HTML_END
+export async function createInstanceRootObjects(that: any): Promise<void> {
+		that.log.debug('createInstanceRootObjects started');
 	try {
 		const getStateP = util.promisify(that.getState);
 
@@ -179,6 +180,8 @@ export async function createInstanceRootObjects(that: any, table: string, tableG
 			[c.idDeviceList_Warn_JSON, 'state', c.idDeviceList_Warn_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched devices'],
 			[c.idDeviceList_Warn_active_JSON, 'state', c.idDeviceList_Warn_active_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched active devices'],
 			[c.idDeviceList_Warn_inactive_JSON, 'state', c.idDeviceList_Warn_inactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched inactive devices'],
+			[c.idDeviceList_NewAddedDevices_JSON, 'state', c.idDeviceList_NewAddedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all new added device from Fritz!Box'],
+			[c.idDeviceList_RemovedDevices_JSON, 'state', c.idDeviceList_RemovedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all removed devices from Fritz!Box network list'],
 			[c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'any confiuration data have been changed'],
 			[c.idDeviceList_OwnerChanged, 'state', c.idDeviceList_OwnerChanged, 'boolean', 'info', false, true, false, 'owner name has changed'],
 			[c.idDeviceList_WarnChanged, 'state', c.idDeviceList_WarnChanged, 'boolean', 'info', false, true, false, 'warn state has changed'],

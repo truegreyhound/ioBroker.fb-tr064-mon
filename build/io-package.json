@@ -1,0 +1,109 @@
+{
+    "common": {
+        "name": "fb-tr-064",
+        "version": "0.3.3",
+        "news": {
+            "1.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "Fritzbox TR-064 mon",
+        "titleLang": {
+            "en": "Fritzbox TR-064 mon",
+            "de": "Fritzbox TR-064 mon",
+            "ru": "Fritzbox TR-064 mon",
+            "pt": "Fritzbox TR-064 mon",
+            "nl": "Fritzbox TR-064 mon",
+            "fr": "Fritzbox TR-064 mon",
+            "it": "Fritzbox TR-064 mon",
+            "es": "Fritzbox TR-064 mon",
+            "pl": "Fritzbox TR-064 mon",
+            "zh-cn": "Fritzbox TR-064 mon"
+        },
+        "desc": {
+            "en": "read Fritzbox data over TR-064",
+            "de": "Fritzbox Daten über TR-064 auslesen",
+            "ru": "читать данные Fritzbox через TR-064",
+            "pt": "ler dados Fritzbox sobre TR-064",
+            "nl": "Fritzbox-gegevens lezen via TR-064",
+            "fr": "lire les données Fritzbox sur TR-064",
+            "it": "leggi i dati di Fritzbox su TR-064",
+            "es": "leer datos de Fritzbox sobre TR-064",
+            "pl": "odczyt danych Fritzbox przez TR-064",
+            "zh-cn": "通过TR-064读取Fritzbox数据"
+        },
+        "authors": [
+            "truegreyhound <truegreyhound@gmx.net>"
+        ],
+        "keywords": [
+            "fritzbox",
+            "tr-064",
+            "network",
+            "watch"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "build/main.js",
+        "icon": "fb-tr-064.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr-064/master/admin/fb-tr-064.png",
+        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr-064/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "infrastructure",
+        "compact": true,
+        "connectionType": "cloud",
+        "dataSource": "poll",
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=3.1.0"
+            }
+        ]
+    },
+    "native": {
+        "option1": true,
+        "option2": "42"
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.supportedFunctions",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        }
+    ]
+}

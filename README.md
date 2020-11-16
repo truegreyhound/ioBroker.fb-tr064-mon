@@ -224,6 +224,8 @@ OS version of the Fritzbox
 
 ## Changelog 
 
+### 0.3.4 small fixes
+
 ### 0.3.3 first public release on github
 
 ### 0.1.0

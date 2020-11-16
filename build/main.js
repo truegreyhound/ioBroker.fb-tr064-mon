@@ -126,7 +126,7 @@ function createDeviceStatusLists(that, aDevices) {
                 // known device in adapter config, remove from known list
                 aAllConfiguredDevices.splice(aAllConfiguredDevices.findIndex(item => item.macaddress === oDevice.MACAddress), 1);
                 if (oDevice.IPAddress == that.config.fb_ip) {
-                    // self
+                    // fb
                     that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
                     that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
                 }

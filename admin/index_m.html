@@ -1,0 +1,329 @@
+<html>
+	<head>
+		<!-- Load ioBroker scripts and styles-->
+		<link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+		<link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+
+		<script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+
+		<script type="text/javascript" src="../../js/translate.js"></script>
+		<script type="text/javascript" src="../../lib/js/materialize.js"></script>
+		<script type="text/javascript" src="../../js/adapter-settings.js"></script>
+
+		<!-- Load our own files -->
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		<script type="text/javascript" src="words.js"></script>
+
+		<script type="text/javascript">
+			// This will be called by the admin adapter when the settings page loads
+			var secret;
+			var active = false;
+
+			function encrypt(key, value) {
+				var result = '';
+				for (var i = 0; i < value.length; ++i) {
+					result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
+				}
+				return result;
+			}
+
+			function decrypt(key, value) {
+				var result = '';
+				for (var i = 0; i < value.length; ++i) {
+					result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
+				}
+				return result;
+			}	
+
+			function setValue(id, value, onChange) {
+				var $value = $('#' + id + '.value');
+				if ($value.attr('type') === 'checkbox') {
+					$value.prop('checked', value).change(function() {
+						onChange();
+					});
+				} else {
+					var val = $value.data('crypt') && value ? decrypt(secret, value) : value;
+
+					$value.val(val).change(function() {
+						onChange();
+					}).keyup(function() {
+						// Check that only numbers entered
+						if ($(this).hasClass('number')) {
+							var val = $(this).val();
+							if (val) {
+								var newVal = '';
+								for (var i = 0; i < val.length; i++) {
+									if (val[i] >= '0' && val[i] <= '9') {
+										newVal += val[i];
+									}
+								}
+								if (val != newVal) $(this).val(newVal);
+							}
+						}
+						onChange();
+					});
+				}
+			}
+
+			// This will be called by the admin adapter when the settings page loads
+			function load(settings, onChange) {
+				// --> fragt den Status von 'system.adapter.fb-tr-064.x.alive'; dass ist der  ioBroker-Adapter-Status
+				//!P! kommt die Antwort vom js-controller?
+				socket.emit('getState', 'system.adapter.' + adapter + '.' + instance + '.alive', function (err, state) {
+					active = (state && state.val);		// TRUE|FALSE
+					
+					if (!active) {
+						var content = '<div class="modal-content"><h4>' + _('Error') + '</h4><p>' + _('You have to start your ioBroker.' + adapter + ' adapter before you can use this function!') + '</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+						$('.modal').append(content);
+						$('.modal').modal();
+
+						return;
+					}
+
+					let g_onChange = onChange;
+					sendTo(adapter + '.' + instance, 'discovery', { onlyActive: true, reread: false }, function (result) {
+						try {
+							console.log(result);
+
+							var arr = JSON.parse(result);
+							if (arr.error) {
+								var content = '<div class="modal-content"><h4>' + _('Error') + '</h4><p>' + arr.error.message + '</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+								$('.modal').append(content);
+								$('.modal').modal();
+
+								return;
+							}
+
+							if (!arr.devices.length) {
+								var content = '<div class="modal-content"><h4>' + _('load devices from Fritz!Box') + '</h4><p>' + _('Cannot find any device') + '</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+								$('.modal').append(content);
+								$('.modal').modal();
+
+								return;
+							}
+
+							var dlg =
+									'<div col s12>' + 
+										'<table class="responsive-table highlight" id="tabDevices">' + 
+											'<thead>' + 
+												'<tr class="grey darken-3 white-text">' + 
+													'<th class="left-align">' + 'Hostname' + '</th>' + 
+													'<th class="center-align">' + _('MAC address') + '</th>' + 
+													'<th class="valign-wrapper"><label><input type="checkbox" class="filled-in" id="insertIP" /><span class="white-text" style="font-size: 13px">' + _('IP address') + '</span></th>' +
+												'</tr>' + 
+											'</thead>' +
+											'<tbody>';
+
+												let cnt = 0;
+							arr.devices.forEach(function (element) {
+								//!P! element: {name, mac, ip, aktiv??}
+									cnt += 1;
+
+									dlg += 
+										'<tr class="add-device" ' +
+											'data-networkname="' + (element.name || '').replace(/"/g, '\"') + '" ' +
+											'data-macaddress="' + (element.mac || '') + '" ' +
+											'data-ip="' + (element.ip || '').replace(/"/g, '\"') + '">' +
+											'<td>' + element.name + '</td>' +
+											'<td class="center">' + element.ip + '</td>' +
+											'<td class="center">' + element.mac + '</td>' +
+										'</tr>';
+							});
+								dlg += '</tbody></table></div>';
+
+								var content = 
+									'<div class="modal-content translate">' + 
+										'<h5 class="blue">' + _('read devices from Fritz!Box') + '</h5>' + 
+										'<p>' + dlg + '</p>' + 
+									'</div>' + 
+									'<div class="modal-footer blue lighten-2">' + 
+										'<a href="#!" class="modal-action modal-close btn-default waves-effect waves-light btn-flat"><i class="material-icons left">close</i>' + _('Close') + '</a>' + 
+									'</div>';
+								
+								$('#dialog-search').append(content);
+								$('#dialog-search').modal();
+
+/*
+								$('.add-device').click(function () {
+								var insertIP = $('#insertIP');
+								if ($(insertIP).prop( "checked" )) {
+									var mac = $(this).data('ip');
+								}else{
+									var mac = $(this).data('macaddress');
+								}
+								var enabled = true;
+								var familymember = $(this).data('familymember');
+								var comment = ''; //$(this).data('comment');
+
+								devices = table2values('values');
+								devices.push({macaddress: mac, enabled: enabled, familymember: familymember, comment: comment});
+								values2table('values', devices, g_onChange);
+								g_onChange(true);
+*/
+						} catch (e) {
+							var content = '<div class="modal-content"><h4>Error</h4><p>Cannot find any device</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+							$('.modal').append(content);
+							$('.modal').modal();
+						}
+					});
+            	});
+
+
+				// example: select elements with id=key and class=value and insert value
+				if (!settings) return;
+				socket.emit('getObject', 'system.config', function (err, obj) {
+					console.log('getObject, obj: ' + JSON.stringify(obj) + '<<<')
+
+					secret = (obj.native ? obj.native.secret : '') || 'SdoeQ85NTrg1B0FtEyzf';
+					console.log('secret: ' + secret + '<<<')
+
+					$('.value').each(function () {
+						var $key = $(this);
+						var id = $key.attr('id');
+						if ($key.attr('type') === 'checkbox') {
+							// do not call onChange direct, because onChange could expect some arguments
+							$key.prop('checked', settings[id])
+								.on('change', () => onChange())
+								;
+						} else {
+							// do not call onChange direct, because onChange could expect some arguments
+							$key.val(settings[id])
+								.on('change', () => onChange())
+								.on('keyup', () => onChange())
+								;
+						}
+					});
+					onChange(false);
+					// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+					if (M) M.updateTextFields();
+					$('select').select();
+				});
+			}
+
+			// This will be called by the admin adapter when the user presses the save button
+			function save(callback) {
+				// example: select elements with class=value and build settings object
+				var obj = {};
+				$('.value').each(function () {
+					var $this = $(this);
+					switch ($this.attr('type')) {
+						case 'checkbox':
+							obj[$this.attr('id')] = $this.prop('checked');
+							break;
+						case 'number':	
+							obj[$this.attr('id')] = parseInt($this.val(), 10);
+							break;
+						default:
+							obj[$this.attr('id')] = $this.data('crypt') && $this.val() ? encrypt(secret, $this.val()) : $this.val();
+							break;					
+					}
+				});
+				callback(obj);
+			}
+		</script>
+
+	</head>
+
+	<body>
+		<div class="m adapter-container">
+			<div class="row">
+				<div class="col s12"> <!--id="tabs" style="width: 100%; height: 100%; overflow: hidden;"-->
+					<!-- define tabs -->
+					<ul class="tabs">
+						<li class="tab col s3"><a href="#tab-main" class="translate active">Main settings</a></li>
+						<li class="tab col s3"><a href="#tab-devices" class="translate">device settings</a></li>
+					</ul>
+				</div>
+
+				<!-- define elements of the tabs -->
+				<div id="tab-main" class="col s12 page">
+					<div class="row">
+						<div class="col s12 m4 l2">
+							<img src="fb-tr-064.png" class="logo">
+						</div>
+					</div><!-- End of row -->
+
+					<div class="row">
+						<div class="col s2 input-field tooltip">	
+							<input type="text" class="value" maxlength="15" id="fb_ip"/>
+							<label for="fb_ip" class="translate">IP Fritzbox</label>
+							<span class="tooltiptext translate">Here you can enter the IP-Address from your Fritzbox</span>
+						</div>
+						<div class="col s2 input-field tooltip">	
+							<input type="text" data-crypt="0" class="value" id="fb_uid"/>
+							<label for="fb_uid" class="translate">Username</label>
+							<span class="tooltiptext translate">Here you can enter the fritzbox user</span>
+						</div>
+						<div class="input-field col s3 tooltip">
+						<input type="password" data-crypt="1" class="value" id="fb_password">
+						<label for="fb_password">Password</label>
+						<span class="tooltiptext translate">Here you can enter the password from the fritbox user</span>
+						</div>				
+						<div class="col s2 input-field tooltip">
+							<input type="number" class="value" min="1" max="3600" id="fb_query_interval" />
+							<label for="fb_query_interval" class="translate">polling interval in seconds</label>
+							<span class="tooltiptext translate">Here you can define the polling interval [between 1 to 3600 seconds]</span>
+						</div>
+					</div><!-- End of row -->
+					<div class="row">
+						<div class="col s2 input-field">
+							<select class="value" id="history_source">
+								<!--option value="" disabled selected class="translate">Choose your option</option-->
+								<option value="" class="translate">disabled</option>
+								<option value="history.0">History</option>
+								<option value="sql.0">SQL History</option>
+								<option value="influxdb.0">InfluxDB</option>
+							</select>
+							<label for history_source class="translate">Select history adapter</label>
+						</div>				
+						<div class="col s3 input-field tooltip">	
+							<input type="text" class="value" id="dateformat"/>
+							<label for="dateformat" class="translate">Date format</label>
+							<span class="tooltiptext translate">Here you can enter the date format string for the tables</span>
+						</div>
+					</div><!-- End of row -->
+				</div><!-- End of tab main -->
+
+				<div id="tab-devices" class="col s12 page">
+					<div class="row">
+						<div class="col s12 m8 l8">
+							<img src="fb-tr-064.png" class="logo">
+							<p class="translate">Here you can overwrite the network name, set an owner (used for external presence detection) and enable watching for enabled devices.</p>
+							<p class="translate">For each enabled device (for presence detection or watching) an object will be created.</p>
+						</div>
+					</div><!-- End of row -->
+
+					<div id="values">
+						<div class="row">
+							<div class="col s12">
+								<a class="btn-floating waves-effect waves-light table-button-add"><i class="material-icons">add</i></a>
+								<a class="btn waves-effect waves-light modal-trigger translate" href="#dialog-search">search devices</a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col s11">
+								<table class="table-values" style="width: 100%;">
+									<thead>
+										<tr>
+											<th data-name="_index" style="width: 5%" class="center-align translate"></th>
+											<th data-name="networkname" style="width: 25%" class="translate" for="networkname">network name</th>
+											<th data-name="macaddress" style="width: 25%" class="translate" for="macaddress">MAC address</th>
+											<th data-name="ipaddress" style="width: 30%" class="translate" for="ipaddress">ip address</th>
+											<th data-name="ownername" style="width: 25%" class="translate" for="ownername">owner name</th>
+											<th data-name="presencedevice"  style="width: 10%" data-type="checkbox" class="translate">presence device</th>
+											<th data-name="watch"  style="width: 10%" data-type="checkbox" class="translate">watch</th>
+<!--											<th data-buttons="delete" style="width: 5%"></th> -->
+										</tr>
+									</thead>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div><!-- End of tab devices -->
+
+				<div id="dialog-search" class="modal modal-fixed-footer grey lighten-2"></div>
+			</div>
+		</div><!-- End of adapter container -->
+	</body>
+</html>

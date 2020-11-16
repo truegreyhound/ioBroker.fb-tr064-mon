@@ -1,0 +1,120 @@
+In der objects.json werden unter anderem (beim Start!?) die Properties aus der main.js zum Zeitpunkt der Installation gespeichert!
+
+
+
+"option1": true,
+"option2": "42"
+
+testVariable
+
+
+
+declare global {
+	// eslint-disable-next-line @typescript-eslint/no-namespace
+	namespace ioBroker {
+		interface AdapterConfig {
+			// Define the shape of your options here (recommended)
+			option1: boolean;
+			option2: string;
+
+
+	private async onReady(): Promise<void> {
+		// Initialize your adapter here
+
+		// The adapters config (in the instance object everything under the attribute 'native') is accessible via
+		// this.config:
+		this.log.info('config option1: ' + this.config.option1);
+		this.log.info('config option2: ' + this.config.option2);
+
+		/*
+		For every state in the system there has to be also an object of type state
+		Here a simple template for a boolean variable named 'testVariable'
+		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
+		*/
+		await this.setObjectAsync('testVariable', {
+			type: 'state',
+			common: {
+				name: 'testVariable',
+				type: 'boolean',
+				role: 'indicator',
+				read: true,
+				write: true,
+			},
+			native: {},
+		});
+
+
+system.config
+{
+	"_id": "system.config",
+	"type": "config",
+	"common": {
+		"name": "System configuration",
+		"city": "Berlin",
+		"country": "Germany",
+		"longitude": "13.3818418",
+		"latitude": "52.5164415",
+		"language": "de",
+		"tempUnit": "°C",
+		"currency": "€",
+		"dontDelete": true,
+		"dateFormat": "DD.MM.YYYY",
+		"isFloatComma": false,
+		"licenseConfirmed": true,
+		"defaultHistory": "",
+		"activeRepo": "latest",
+		"diag": "extended",
+		"tabs": [
+			"tab-intro",
+			"tab-info",
+			"tab-adapters",
+			"tab-instances",
+			"tab-objects",
+			"tab-logs",
+			"tab-scenes",
+			"tab-javascript",
+			"tab-text2command-0",
+			"tab-node-red-0",
+			"tab-enums",
+			"tab-events",
+			"tab-hosts",
+			"tab-users"
+		],
+		"wizard": true,
+		"defaultNewAcl": {
+			"object": 1636,
+			"state": 1636,
+			"file": 1636,
+			"owner": "system.user.admin",
+			"ownerGroup": "system.group.administrator"
+		}
+	},
+	"native": {
+		"secret": "6c8b2c1df47463a34bdd30f5332e358f0248b099f3e10b6e"
+	},
+	"acl": {
+		"owner": "system.user.admin",
+		"ownerGroup": "system.group.administrator",
+		"object": 1604
+	},
+	"from": "system.adapter.admin.0",
+	"ts": 1581111120449,
+	"user": "system.user.admin"
+}
+
+Adapter, this config
+{
+	"option1": true,
+	"option2": "42",
+	"ipaddress": "192.168.200.101",
+	"username": "TR-064",
+	"password": "B\u0011\bT\u0006Ba\u0010\u001f\r\u0005",
+	"interval": 67,
+	"history": "",
+	"dateformat": "yyyy.mm.dd hh:MM:ss",
+	"fb_ip": "192.168.200.101",
+	"fb_uid": "TR-064",
+	"fb_password": "B\u0011\bT\u0006Ba\u0010\u001f\r\u0005",
+	"fb_query_interval": 67,
+	"history_source": ""
+}

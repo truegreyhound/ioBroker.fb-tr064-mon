@@ -158,7 +158,7 @@ function createDeviceStatusLists(that: any, aDevices: any) {
 				aAllConfiguredDevices.splice(aAllConfiguredDevices.findIndex(item => item.macaddress === oDevice.MACAddress), 1)
 
 				if(oDevice.IPAddress == that.config.fb_ip) {
-					// self
+					// fb
 					that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
 					that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
 				} else {
@@ -391,6 +391,7 @@ class FbTr064 extends utils.Adapter {
 				items = await getDeviceList(this, null, mFbClass);
 				//this.log.debug('onReady, items: ' + JSON.stringify(items));
 			}
+			this.log.debug('updateDevicesStatus, config.devicesList: ' + JSON.stringify(this.config.devicesList));
 			this.log.debug('updateDevicesStatus, items: ' + JSON.stringify(items));
 
 			if (items) {
@@ -400,6 +401,7 @@ class FbTr064 extends utils.Adapter {
 			
 			// update periodical
 			this.log.debug(fctName + ', this.config.devicesList.length: ' + this.config.devicesList.length + '; GetSecurityPort: ' + (c.supportedFunctions.findIndex(x => x === 'GetSecurityPort') >= 0));
+
 			if(mScheduleStatus == null && this.config.devicesList.length > 0 && (c.supportedFunctions.findIndex(x => x === 'GetSecurityPort') >= 0)) {
 				mScheduleStatus = setInterval(() => this.updateDevicesStatus(), this.config.fb_query_interval * 1000);
 				this.log.debug(fctName + ', scheduler for updateDevicesStatus created, run all ' + this.config.fb_query_interval + ' seconds');

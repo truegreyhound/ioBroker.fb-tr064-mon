@@ -7,6 +7,12 @@
  */
 
 /* !P!
+Das Handling mit deviceName und Hostname muss noch mal geprüft werden.
+Initial soll deviceName == hostName von der Fritzbox sein, beide Felder sind in der CFG zu füllen.
+Der DP für das device wird mit dem deviceName angelegt.
+Existiert der DP für deviceName nicht, prüfen ob einer für hostName existiert --> rename, ansonsten neu anlegen
+Prüfen, ob es möglich ist, DPs umzubenennen, wenn nicht, alte States als Objekt schreiben, analog zum mqtt-Adapter
+
 device K3 D8:50:E6:D3:07:87 192.168.200.109 > wird interface Ethernet nicht entfernt, obwohl nicht im Netz
 IP-address for device "influx-01" changed (old: "192.168.200.105"; new: "192.168.200.107"; MAC: "90:1B:0E:BA:80:82" > kann es sein, dass das intern nicht aktualisiert wird?  IPlast
 
@@ -22,7 +28,7 @@ c)	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
 	deviceName	- Name aus der Adapterkonfiguration == Name des Datenpunktes des Gerätes
 	hostName	- Name des Gerätes aus der Fritz!Box
 
-	"Friend" ist der festgelegte Ownername für Geräte der Freunde. guest für Geräte der Gäste
+	"guest" ist der festgelegte Ownername für Geräte der Gäste
 
 	Adapterkonfiguration
 		Spalte watch - für dieses Geräte werden DPs angelegt

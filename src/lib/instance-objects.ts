@@ -182,7 +182,7 @@ export async function createInstanceRootObjects(that: any): Promise<void> {
 			[c.idDeviceList_Warn_inactive_JSON, 'state', c.idDeviceList_Warn_inactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched inactive devices'],
 			[c.idDeviceList_NewAddedDevices_JSON, 'state', c.idDeviceList_NewAddedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all new added device from Fritz!Box'],
 			[c.idDeviceList_RemovedDevices_JSON, 'state', c.idDeviceList_RemovedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all removed devices from Fritz!Box network list'],
-			[c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'any confiuration data have been changed'],
+			[c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'ip address has changed'],
 			[c.idDeviceList_OwnerChanged, 'state', c.idDeviceList_OwnerChanged, 'boolean', 'info', false, true, false, 'owner name has changed'],
 			[c.idDeviceList_WarnChanged, 'state', c.idDeviceList_WarnChanged, 'boolean', 'info', false, true, false, 'warn state has changed'],
 			[c.idDeviceList_WatchChanged, 'state', c.idDeviceList_WatchChanged, 'boolean', 'info', false, true, false, 'watch state has changed']

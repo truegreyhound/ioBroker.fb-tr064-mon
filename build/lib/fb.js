@@ -174,7 +174,7 @@ class Fb {
             const sChkServiceUrl = sFB_URL + c.TR064_DESC;
             that.log.debug(fctName + ' status, sChkServiceUrl: ' + sChkServiceUrl);
             // http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
-            //!P! alle Einträge unter supportedFunction löschen oder auf false setzen
+            //!P! alle Einträge unter supportedFunctions löschen oder auf false setzen
             const result = await this.httpGetAsJson(sChkServiceUrl);
             //that.log.debug(fctName + ' result: ' + JSON.stringify(result));
             const sFB_version = result.root.systemVersion.Display;
@@ -380,7 +380,7 @@ class Fb {
             //!P! warum dpvFB_version == Object??
             that.log.debug('chkServices status, sChkServiceUrl: ' + sChkServiceUrl + '; dpvFB_version: ' + JSON.stringify(dpvFB_version)); // http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
             const parseStringP = util.promisify(parseString);
-            //!P! alle Einträge unter supportedFunction löschen oder auf false setzen
+            //!P! alle Einträge unter supportedFunctions löschen oder auf false setzen
             that.log.debug('chkServices status2, sChkServiceUrl: ' + sChkServiceUrl + '; dpvFB_version: ' + JSON.stringify(dpvFB_version)); // http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
             await fetch(new fetch.Request(sChkServiceUrl, { method: "get" }))
                 .then((response) => response.text())

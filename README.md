@@ -54,7 +54,7 @@ The collected information is written as data points under fb-tr-064.n.info
 
 ### Fritzbox support checks
 The function checks the availability and version of used fritzbox features. 
-The collected information is written as data points under fb-tr-064.n.info.supportedFunction
+The collected information is written as data points under fb-tr-064.n.info.supportedFunctions
 
 ## Configuration dialog device settings
 The list of devices is only displayed if the adapter was able to start successfully after the main configuration.
@@ -215,7 +215,7 @@ the mac address of the Fritzbox
 ### name
 the name of the Fritzbox
 
-### supportedFunction_version
+### supportedFunctions_version
 OS version for the supported functions of the Fritzbox
 
 ### version

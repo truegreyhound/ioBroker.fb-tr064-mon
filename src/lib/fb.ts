@@ -228,7 +228,7 @@ export class Fb {
 			that.log.debug(fctName + ' status, sChkServiceUrl: ' + sChkServiceUrl);
 			// http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
 
-			//!P! alle Einträge unter supportedFunction löschen oder auf false setzen
+			//!P! alle Einträge unter supportedFunctions löschen oder auf false setzen
 
 			const result: any = await this.httpGetAsJson(sChkServiceUrl);
 			//that.log.debug(fctName + ' result: ' + JSON.stringify(result));
@@ -464,7 +464,7 @@ export class Fb {
 
 					const parseStringP = util.promisify(parseString);
 
-					//!P! alle Einträge unter supportedFunction löschen oder auf false setzen
+					//!P! alle Einträge unter supportedFunctions löschen oder auf false setzen
 
 					that.log.debug('chkServices status2, sChkServiceUrl: ' + sChkServiceUrl + '; dpvFB_version: ' + JSON.stringify(dpvFB_version));		// http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
 

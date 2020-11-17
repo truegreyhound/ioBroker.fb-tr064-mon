@@ -284,9 +284,10 @@ class FbTr064 extends utils.Adapter {
                         mFbClass.sslPort = parseInt(resultGSP['NewSecurityPort']);
                         this.log.debug('onReady. sslPort ' + mFbClass.sslPort);
                     }
-                    await this.updateDevicesStatus();
+                    //!P! ?? await this.updateDevicesStatus();
                     // in this template all states changes inside the adapters namespace are subscribed
-                    this.subscribeStates('*');
+                    //!P!this.subscribeStates('*');
+                    this.subscribeStates(c.idDeviceListActive_JSON);
                     //!T!this.onMessage({"command":"updateDevicesList","message":{"onlyActive":true,"reread":false},"from":"system.adapter.admin.0","callback":{"message":{"onlyActive":true,"reread":false},"id":320,"ack":false,"time":1583270558930},"_id":81771421});
                 }
                 //			});
@@ -355,6 +356,8 @@ class FbTr064 extends utils.Adapter {
     */
     /**
      * Is called if a subscribed state changes
+     *
+     * only state is idDeviceListActive_JSON
      */
     onStateChange(id, state) {
         /*	if (state) {
@@ -468,6 +471,7 @@ class FbTr064 extends utils.Adapter {
                             });
                         });
                         this.log.debug(fctNameId + ', allDevices: ' + JSON.stringify(aNewCfgDevicesList));
+                        that.sendTo(obj.from, 'updateDevicesStatus');
                         reply(this, aNewCfgDevicesList);
                         return true;
                         break;

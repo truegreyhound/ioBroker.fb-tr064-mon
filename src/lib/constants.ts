@@ -57,12 +57,12 @@ export interface IDeviceList {
 }
 
 export const dppFB_Info = 'info.';
-export const dppFB_Info_SupportedFunctions = 'info.supportedFunction.';
+export const dppFB_Info_SupportedFunctions = 'info.supportedFunctions.';
 export const dppDevices = 'devices.';
 
 export const idFritzBoxVersion = dppFB_Info + 'version';
 export const idFritzBoxName = dppFB_Info + 'name';
-export const idSupportedFunctions_FritzBoxVersion = dppFB_Info + 'supportedFunction_version';
+export const idSupportedFunctions_FritzBoxVersion = dppFB_Info + 'supportedFunctions_version';
 export const idFritzBoxIP = dppFB_Info + 'fb_IP';
 export const idFritzBoxMAC = dppFB_Info + 'fb_MAC';
 

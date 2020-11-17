@@ -87,16 +87,19 @@ async function getDeviceList(that, cfg, Fb) {
     that.log.debug(fctName + ' finished undefined');
 } // getDeviceList()
 /*
-    createDeviceStatusLists(that: any, aDevices: any)
+    createDeviceStatusLists(that: any, aDevices: any, bInitial?: boolean)
     that		- adapter context
     aDevices	- array with devices from the Fritz!Box
+    bInitial	- ignore (empty) device configuration from adapter config page
 
     liest die
 
 */
-function createDeviceStatusLists(that, aDevices) {
+function createDeviceStatusLists(that, aDevices, bInitial) {
     const fctName = 'createDeviceStatusLists';
-    that.log.debug(fctName + ' started');
+    if (!bInitial)
+        bInitial = false;
+    that.log.debug(fctName + ' started, bInitial: ' + bInitial);
     try {
         let aAllActiveDevices = [];
         let aAllActiveLANDevices = [];
@@ -117,14 +120,14 @@ function createDeviceStatusLists(that, aDevices) {
         that.setStateChangedAsync(c.idDeviceList_WatchChanged, false);
         // map - Methode wendet auf jedes Element des Arrays die bereitgestellte Funktion an und gibt das Ergebnis in einem neuen Array zurück.
         // d. h., dass hier manipulierte Element oDevice wird hier zum neuen Element in aDevices
-        aDevices.map(function (oDevice) {
+        aDevices.map((oDevice) => {
             that.log.debug(fctName + ', fb_ip: ' + JSON.stringify(that.config.fb_ip) + '; oDevice: ' + JSON.stringify(oDevice));
             //!P!that.log.debug(fctName + ' oDevice.HostName: ' + oDevice.HostName + '; mFbClass.name: ' + mFbClass.name);
             // oDevice.HostName: sony-player; mFbClass.name: 
             // get configured parameter for device like macaddress, watch, warn, ...
             const oCfgData = that.config.devicesList.find(function (item) { return item.macaddress === oDevice.MACAddress; });
             that.log.debug(fctName + ', oCfgData: ' + JSON.stringify(oCfgData));
-            if (oCfgData) {
+            if (oCfgData || bInitial) {
                 // known device in adapter config, remove from known list
                 aAllConfiguredDevices.splice(aAllConfiguredDevices.findIndex(item => item.macaddress === oDevice.MACAddress), 1);
                 if (oDevice.IPAddress == that.config.fb_ip) {
@@ -135,12 +138,12 @@ function createDeviceStatusLists(that, aDevices) {
                 else {
                     let sDevice = '{"Active": "' + (oDevice.Active == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"';
                     that.log.debug(fctName + ', sDevice: ' + sDevice);
-                    if (oCfgData.warn === true)
+                    if (!bInitial && oCfgData.warn === true)
                         aDeviceList_Warn.push(JSON.parse(sDevice + '}'));
                     if (oDevice.Active == "0") { // inactive
                         aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
                         maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
-                        if (oCfgData.warn === true)
+                        if (!bInitial && oCfgData.warn === true)
                             aDeviceList_Warn_inactive.push(JSON.parse(sDevice + '}'));
                     }
                     else {
@@ -154,7 +157,7 @@ function createDeviceStatusLists(that, aDevices) {
                             aAllActiveWLANDevices.push(JSON.parse(sDevice));
                         if (oDevice.Guest == '1')
                             aAllActiveGuestsDevices.push(JSON.parse(sDevice));
-                        if (oCfgData.warn === true)
+                        if (!bInitial && oCfgData.warn === true)
                             aDeviceList_Warn_active.push(JSON.parse(sDevice));
                     }
                 }
@@ -284,7 +287,7 @@ class FbTr064 extends utils.Adapter {
                         mFbClass.sslPort = parseInt(resultGSP['NewSecurityPort']);
                         this.log.debug('onReady. sslPort ' + mFbClass.sslPort);
                     }
-                    //!P! ?? await this.updateDevicesStatus();
+                    await this.updateDevicesStatus(true);
                     // in this template all states changes inside the adapters namespace are subscribed
                     //!P!this.subscribeStates('*');
                     this.subscribeStates(c.idDeviceListActive_JSON);
@@ -298,7 +301,7 @@ class FbTr064 extends utils.Adapter {
             this.log.error('onReady: ' + e.message);
         }
     } // onReady()
-    async updateDevicesStatus() {
+    async updateDevicesStatus(bInitial = false) {
         const fctName = 'updateDevicesStatus';
         this.log.debug(fctName + ' started');
         let items; // array
@@ -312,7 +315,7 @@ class FbTr064 extends utils.Adapter {
             this.log.debug('updateDevicesStatus, items: ' + JSON.stringify(items));
             if (items) {
                 // splitt and write in data points
-                createDeviceStatusLists(this, items);
+                createDeviceStatusLists(this, items, bInitial);
             }
             // update periodical
             this.log.debug(fctName + ', this.config.devicesList.length: ' + this.config.devicesList.length + '; GetSecurityPort: ' + (c.supportedFunctions.findIndex(x => x === 'GetSecurityPort') >= 0));
@@ -471,7 +474,6 @@ class FbTr064 extends utils.Adapter {
                             });
                         });
                         this.log.debug(fctNameId + ', allDevices: ' + JSON.stringify(aNewCfgDevicesList));
-                        that.sendTo(obj.from, 'updateDevicesStatus');
                         reply(this, aNewCfgDevicesList);
                         return true;
                         break;

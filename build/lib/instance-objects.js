@@ -134,7 +134,7 @@ async function createInstanceRootObjects(that) {
         const aStates = [
             //common.type (aStatesional - (default is mixed==any type) (possible values: number, string, boolean, array, object, mixed, file)
             ['info.connection', 'state', 'connection', 'boolean', 'indicator', false, true, false, 'Fritz!Box connection state'],
-            [c.idFritzBoxVersion, 'state', c.idFritzBoxVersion, 'text', 'info', 0, true, false, 'Fritz!Box version'],
+            [c.idFritzBoxVersion, 'state', c.idFritzBoxVersion, 'string', 'info', 0, true, false, 'Fritz!Box version'],
             [c.idCountDevicesTotal, 'state', c.idCountDevicesTotal, 'number', 'value', 0, true, false, 'Number of devices'],
             [c.idCountDevicesActive, 'state', c.idCountDevicesActive, 'number', 'value', 0, true, false, 'Number of active devices'],
             [c.idCountDevicesActiveLAN, 'state', c.idCountDevicesActiveLAN, 'number', 'value', 0, true, false, 'Number of active LAN devices'],

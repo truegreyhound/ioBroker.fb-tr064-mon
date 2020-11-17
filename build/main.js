@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Created with @iobroker/create-adapter v1.28.0
  */
 /* !P!
+Sortierung deviceName case intensitive
+
 Das Handling mit deviceName und Hostname muss noch mal geprüft werden.
 Initial soll deviceName == hostName von der Fritzbox sein, beide Felder sind in der CFG zu füllen.
 Der DP für das device wird mit dem deviceName angelegt.

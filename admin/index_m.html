@@ -67,37 +67,36 @@
 				M.updateTextFields();
 			}
 
-			/*
-						function setValue(id, value, onChange) {
-							var $value = $('#' + id + '.value');
-							if ($value.attr('type') === 'checkbox') {
-								$value.prop('checked', value).change(function() {
-									onChange();
-								});
-							} else {
-								var val = $value.data('crypt') && value ? decrypt(secret, value) : value;
+			function setValue(id, value) {
+				var $value = $('#' + id + '.value');
+				if ($value.attr('type') === 'checkbox') {
+					$value.prop('checked', value).change(function() {
+						onChange();
+					});
+				} else {
+					var val = $value.data('crypt') && value ? decrypt(secret, value) : value;
 
-								$value.val(val).change(function() {
-									onChange();
-								}).keyup(function() {
-									// Check that only numbers entered
-									if ($(this).hasClass('number')) {
-										var val = $(this).val();
-										if (val) {
-											var newVal = '';
-											for (var i = 0; i < val.length; i++) {
-												if (val[i] >= '0' && val[i] <= '9') {
-													newVal += val[i];
-												}
-											}
-											if (val != newVal) $(this).val(newVal);
-										}
+					$value.val(val).change(function() {
+						onChange();
+					}).keyup(function() {
+						// Check that only numbers entered
+						if ($(this).hasClass('number')) {
+							var val = $(this).val();
+							if (val) {
+								var newVal = '';
+								for (var i = 0; i < val.length; i++) {
+									if (val[i] >= '0' && val[i] <= '9') {
+										newVal += val[i];
 									}
-									onChange();
-								});
+								}
+								if (val != newVal) $(this).val(newVal);
 							}
 						}
-			*/
+						onChange();
+					});
+				}
+			}
+
 			// This will be called by the admin adapter when the settings page loads
 			function load(settings, onChange) {
 				if (!settings) return;

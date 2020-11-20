@@ -112,9 +112,9 @@ Adapter, this config
 	"interval": 67,
 	"history": "",
 	"dateformat": "yyyy.mm.dd hh:MM:ss",
-	"fb_ip": "192.168.200.101",
-	"fb_uid": "TR-064",
-	"fb_password": "B\u0011\bT\u0006Ba\u0010\u001f\r\u0005",
-	"fb_query_interval": 67,
+	"fbIP": "192.168.200.101",
+	"fbUID": "TR-064",
+	"fbPassword": "B\u0011\bT\u0006Ba\u0010\u001f\r\u0005",
+	"fbQueryInterval": 67,
 	"history_source": ""
 }

@@ -181,7 +181,7 @@ export class Fb {
 	} // httpGetAsJson()
 
 
-	async checkServicesAsync(sFB_URL: string, aServices: any, callback: any) {
+	async checkServiceAsync(sFB_URL: string, aServices: any, callback: any) {
 		const fctName = 'checkServicesAsync';
 
 		try {
@@ -209,11 +209,16 @@ export class Fb {
 		} catch {(err: Error) => {
 			this.that.log.error(fctName + ', generell error: ' + JSON.stringify(err));
 
+			// FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
+			if (err && JSON.stringify(err).indexOf('reason: read ECONNRESET') >= 0) {
+				this.that.log.warn(fctName + ', generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
+			}
+
 			this.fbCommunicationError = true;
 			
 			callback(undefined, undefined); 
 		}}
-	}
+	} // checkServicesAsync()
 
 
 	async chkServices(that: any): Promise<boolean> {
@@ -275,7 +280,7 @@ export class Fb {
 				// for sService in ....
 				//!P! analog zu xmlToJSON in eine Function packen
 				const processToCheckedServices = async () =>  {
-					await this.checkServicesAsync(sFB_URL, ajToCheckedServices, async (result: any, jServiceNames: any) => {
+					await this.checkServiceAsync(sFB_URL, ajToCheckedServices, async (result: any, jServiceNames: any) => {
 						that.log.debug(fctName + ' result: ' + JSON.stringify(result));
 
 							const processServices = async () => {
@@ -438,7 +443,12 @@ export class Fb {
 				});
 			}
 		} catch (error) {    
-			that.log.error(fctName + ', generell error: ' + error);
+			that.log.error(fctName + ', generell error: ' + JSON.stringify(error));
+
+			// FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
+			if (error && JSON.stringify(error).indexOf('reason: read ECONNRESET') >= 0) {
+				that.log.warn(fctName + ', generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
+			}
 
 			this.fbCommunicationError = true;
 
@@ -663,12 +673,19 @@ export class Fb {
 			});
 */
 		} catch (error) {    
-			that.log.error('chkServices, generell error: ' + error);
+			that.log.error('chkServices, generell error: ' + JSON.stringify(error));
+
+			// FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
+			if (error && JSON.stringify(error).indexOf('reason: read ECONNRESET') >= 0) {
+				that.log.warn('chkServices, generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
+			}
+
+			this.fbCommunicationError = true;
 
 			return false;
 		}
 		return false;
-	} // chkServices()
+	} // chkServicesXX()
 
 
 	async getSSLPort(): Promise<any>  {
@@ -806,16 +823,16 @@ export class Fb {
 						'charset': 'utf-8'
 					},
 					body: sBody
-				}, function (error: Error, response: any, body: any) {
+				}, (error: Error, response: any, body: any) => {
 					that.log.debug('soapAction, response: ' + oDevice.auth.chCount + ' ' + JSON.stringify(response));
 					//!T!that.log.debug('soapAction, body response: ' + body);
                     
 					if (!error && response.statusCode == 200) {
-						parseString(body, {explicitArray: false}, async function (err: Error, result: any) {
-							//this.that.log.debug('soapAction, soap1 ' + device._auth.chCount + ' ' + JSON.stringify(result));
-							//let challange = false;
+						parseString(body, {explicitArray: false}, async (err: Error, result: any) => {
+							this.that.log.debug('soapAction, soap1 ' + oDevice.auth.chCount + ' ' + JSON.stringify(result));
+							//let challenge = false;
 
-							if(err) reject('soapAction ' + sAction + ' -> ' + error);
+							if (err) reject('soapAction ' + sAction + ' -> ' + error);
 
 							let res = {};
 							const env = result['s:Envelope'];
@@ -828,7 +845,7 @@ export class Fb {
 									if (sHeader['h:Challenge']) {
 										const ch = sHeader['h:Challenge'];
 										
-										//challange = true;
+										//challenge = true;
 										if (oDevice.auth.chCount > 2) {
 											reject('authentification failure');
 										} else {
@@ -886,7 +903,7 @@ export class Fb {
 										res = fault;
 
 										if (oDevice.auth.chCount > 1){
-											that.log.debug('Fault ' + oDevice.auth.chCount + ' ' + JSON.stringify(fault));
+											that.log.error('soapAction, fault ' + oDevice.auth.chCount + ' ' + JSON.stringify(fault));
 
 											reject('soapAction, device responded with fault: ' + JSON.stringify(fault));
 										} 
@@ -913,7 +930,4 @@ export class Fb {
 			this.that.log.error('soapAction, error: ' + e.message);
 		}    
 	}
-}
-
-
-
+} // soapAction()

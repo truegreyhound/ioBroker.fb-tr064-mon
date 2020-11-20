@@ -17,8 +17,9 @@
 
 		<script type="text/javascript">
 			// This will be called by the admin adapter when the settings page loads
+            var onChange = null;
 			var active = false;
-			var oDLonLoad = {};
+			var oDLonstart = {};
 
 			// Create secrect for encrypted password storage
 			var secret;
@@ -37,13 +38,44 @@
 				return result;
 			}
 
-			function loadHelper(settings, onChange) {
+			function setValue(id, value) {
+				var $value = $('#' + id + '.value');
+				if ($value.attr('type') === 'checkbox') {
+					$value.prop('checked', value).change(function() {
+						onChange();
+					});
+				} else {
+					var val = $value.data('fbPassword') && value ? decrypt(secret, value) : value;
+
+					$value.val(val).change(function() {
+						onChange();
+					}).keyup(function() {
+						// Check that only numbers entered
+						if ($(this).hasClass('number')) {
+							var val = $(this).val();
+							if (val) {
+								var newVal = '';
+								for (var i = 0; i < val.length; i++) {
+									if (val[i] >= '0' && val[i] <= '9') {
+										newVal += val[i];
+									}
+								}
+								if (val != newVal) $(this).val(newVal);
+							}
+						}
+						onChange();
+					});
+				}
+			}
+
+			function loadHelperXX(settings, onChange) {
 				// example: select elements with id=key and class=value and insert value
 				if (!settings) return;
+
 				$('.value').each(function () {
 					var $key = $(this);
 					var id = $key.attr('id');
-					if ($key.data('crypt') === 1) {
+					if ($key.data('fbPassword') === 1) {
 						settings[id] = decrypt(secret, settings[id]);
 					}
 					if ($key.attr('type') === 'checkbox') {
@@ -67,173 +99,58 @@
 				M.updateTextFields();
 			}
 
-			function setValue(id, value) {
-				var $value = $('#' + id + '.value');
-				if ($value.attr('type') === 'checkbox') {
-					$value.prop('checked', value).change(function() {
-						onChange();
-					});
-				} else {
-					var val = $value.data('crypt') && value ? decrypt(secret, value) : value;
+			function loadHelper(settings, param, subparam) {
+                if (!settings) return;
+                
+                if (subparam && param) {
+                    for (var key in settings[param][subparam]) {
+                        if (!settings[param][subparam].hasOwnProperty(key)) continue;
+                        if (typeof settings[param][subparam][key] !== 'object') {
+                            setValue(param + '_' + subparam + '_' + key, settings[param][subparam][key]);
+                        } else {
+                            alert('4th level is not supported');
+                        }
+                    }
+                } else if (param) {
+                    for (var key in settings[param]) {
+                        if (!settings[param].hasOwnProperty(key)) continue;
+                        if (typeof settings[param][key] !== 'object') {
+                            setValue(param + '_' + key, settings[param][key]);
+                        } else {
+                            loadHelper(settings, param, key);
+                        }
+                    }
+                } else {
+                    for (var key in settings) {
+                        if (!settings.hasOwnProperty(key)) continue;
+                        if (typeof settings[key] !== 'object') {
+                            if (key === 'fbPassword') {
+                                settings[key] = decrypt(secret, settings[key]);
+                            }
+                            setValue(key, settings[key]);
+                        } else {
+                            loadHelper(settings, key);
+                        }
+                    }
+                }
+            }
 
-					$value.val(val).change(function() {
-						onChange();
-					}).keyup(function() {
-						// Check that only numbers entered
-						if ($(this).hasClass('number')) {
-							var val = $(this).val();
-							if (val) {
-								var newVal = '';
-								for (var i = 0; i < val.length; i++) {
-									if (val[i] >= '0' && val[i] <= '9') {
-										newVal += val[i];
-									}
-								}
-								if (val != newVal) $(this).val(newVal);
-							}
-						}
-						onChange();
-					});
-				}
-			}
-
+			
 			// This will be called by the admin adapter when the settings page loads
-			function load(settings, onChange) {
+			function load(settings, _onChange) {
 				if (!settings) return;
 
-				// --> fragt den Status von 'system.adapter.fb-tr-064.x.alive'; dass ist der  ioBroker-Adapter-Status
-				//!P! kommt die Antwort vom js-controller?
-				socket.emit('getState', 'system.adapter.' + adapter + '.' + instance + '.alive', function (err, state) {
-					active = state && state.val; // TRUE|FALSE
+				onChange = _onChange;
 
-					if (!active) {
-						var content =
-							'<div class="modal-content"><h4>' +
-							_('Error') +
-							'</h4><p>' +
-							_('You have to start your ioBroker.' + adapter + ' adapter before you can use this function!') +
-							'</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
-						$('.modal').append(content);
-						$('.modal').modal();
-
-						return;
-					}
-
-					let g_onChange = onChange;
-					sendTo(adapter + '.' + instance, 'updateDevicesList', { onlyActive: true, reread: false }, function (result) {
-						try {
-							console.log(result);
-
-							var arr = JSON.parse(result);
-							if (arr.error) {
-								var content =
-									'<div class="modal-content"><h4>' + _('Error') + '</h4><p>' + arr.error.message + '</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
-								$('.modal').append(content);
-								$('.modal').modal();
-
-								return;
-							}
-
-							if (!arr.devices.length) {
-								var content =
-									'<div class="modal-content"><h4>' +
-									_('load devices from Fritz!Box') +
-									'</h4><p>' +
-									_('Cannot find any device') +
-									'</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
-								$('.modal').append(content);
-								$('.modal').modal();
-
-								return;
-							}
-
-							/*
-										arr.devices.forEach(function (jItem) {
-											//!P! element: {name, mac, ip, aktiv??}
-											devices.push({hostname: jItem.hostname,macaddress: jItem.mac, ip: jItem.ip, enabled: jItem.watch, });
-										});
-										*/
-							values2table('values', arr.devices, g_onChange);
-
-							//!P!oDLonLoad.devicesList = arr.devices;
-							oDLonLoad.devicesList = table2values('values');
-
-							g_onChange(true);
-
-							/*
-										var dlg =
-												'<div col s12>' +
-													'<table class="responsive-table highlight" id="tabDevices">' +
-														'<thead>' +
-															'<tr class="grey darken-3 white-text">' +
-																'<th class="left-align">' + 'Hostname' + '</th>' +
-																'<th class="center-align">' + _('MAC address') + '</th>' +
-																'<th class="valign-wrapper"><label><input type="checkbox" class="filled-in" id="insertIP" /><span class="white-text" style="font-size: 13px">' + _('IP address') + '</span></th>' +
-															'</tr>' +
-														'</thead>' +
-														'<tbody>';
-
-															let cnt = 0;
-										arr.devices.forEach(function (element) {
-											//!P! element: {name, mac, ip, aktiv??}
-												cnt += 1;
-
-												dlg +=
-													'<tr class="add-device" ' +
-														'data-devicename="' + (element.hostname || '').replace(/"/g, '\"') + '" ' +
-														'data-macaddress="' + (element.mac || '') + '" ' +
-														'data-ip="' + (element.ip || '').replace(/"/g, '\"') + '">' +
-														'<td>' + element.name + '</td>' +
-														'<td class="center">' + element.ip + '</td>' +
-														'<td class="center">' + element.mac + '</td>' +
-													'</tr>';
-										});
-											dlg += '</tbody></table></div>';
-
-											var content =
-												'<div class="modal-content translate">' +
-													'<h5 class="blue">' + _('read devices from Fritz!Box') + '</h5>' +
-													'<p>' + dlg + '</p>' +
-												'</div>' +
-												'<div class="modal-footer blue lighten-2">' +
-													'<a href="#!" class="modal-action modal-close btn-default waves-effect waves-light btn-flat"><i class="material-icons left">close</i>' + _('Close') + '</a>' +
-												'</div>';
-
-											$('#dialog-search').append(content);
-											$('#dialog-search').modal();
-			*/
-							/*
-											$('.add-device').click(function () {
-											var insertIP = $('#insertIP');
-											if ($(insertIP).prop( "checked" )) {
-												var mac = $(this).data('ip');
-											}else{
-												var mac = $(this).data('macaddress');
-											}
-											var enabled = true;
-											var familymember = $(this).data('familymember');
-											var comment = ''; //$(this).data('comment');
-
-											devices = table2values('values');
-											devices.push({macaddress: mac, enabled: enabled, familymember: familymember, comment: comment});
-											values2table('values', devices, g_onChange);
-											g_onChange(true);
-			*/
-						} catch (e) {
-							var content = '<div class="modal-content"><h4>Error</h4><p>Cannot find any device</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
-							$('.modal').append(content);
-							$('.modal').modal();
-						}
-					});
-				});
-
+								
 				// example: select elements with id=key and class=value and insert value
 				socket.emit('getObject', 'system.config', function (err, obj) {
 					console.log('getObject, obj: ' + JSON.stringify(obj) + '<<<');
 
 					//!P!secret = (obj.native ? obj.native.secret : '') || 'Zgfr56gFe87jJOM';
 					secret = (obj.native ? obj.native.secret : '') || 'SdoeQ85NTrg1B0FtEyzf';
-					loadHelper(settings, onChange);
+
+					loadHelper(settings);
 					console.log('load, secret: ' + secret + '<<<');
 
 					$('.value').each(function () {
@@ -249,15 +166,86 @@
 								.on('keyup', () => onChange());
 						}
 					});
-					onChange(false);
-					// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
-					if (M) M.updateTextFields();
-					$('select').select();
+
+					oDLonstart.devicesList = settings.devicesList;
+					oDLonstart.devicesListOld = settings.devicesListOld;
+
+					// --> fragt den Status von 'system.adapter.fb-tr-064.x.alive'; dass ist der  ioBroker-Adapter-Status
+					// die Antwort vom js-controller per callback/sendTo
+					socket.emit('getState', 'system.adapter.' + adapter + '.' + instance + '.alive', function (err, state) {
+						active = state && state.val; // TRUE|FALSE
+						console.log('load, adapter instance active: ' + active + '<<<');
+
+						if (!active) {
+							var content =
+								'<div class="modal-content"><h4>' +
+								_('Error') +
+								'</h4><p>' +
+								_('You have to start your ioBroker.' + adapter + ' adapter before you can use this function!') +
+								'</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+							$('.modal').append(content);
+							$('.modal').modal();
+						} else {
+							console.log('load, sendTo(' + adapter + '.' + instance + ', \'updateDevicesList\', ...)'); 
+							sendTo(adapter + '.' + instance, 'updateDevicesList', { onlyActive: true, reread: false }, function (result) {
+								try {
+									console.log(result);
+									
+									console.log('load, sendTo finished with result: ' + result); 
+
+									var arr = JSON.parse(result);
+									if (arr.error) {
+										var content =
+											'<div class="modal-content"><h4>' + _('Error') + '</h4><p>' + arr.error.message + '</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+										$('.modal').append(content);
+										$('.modal').modal();
+
+										return;
+									}
+
+									if (!arr.devices.length) {
+										var content =
+											'<div class="modal-content"><h4>' +
+											_('load devices from Fritz!Box') +
+											'</h4><p>' +
+											_('Cannot find any device') +
+											'</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+										$('.modal').append(content);
+										$('.modal').modal();
+
+										return;
+									}
+
+									values2table('values', arr.devices, onChange);
+								} catch (e) {
+									var content = '<div class="modal-content"><h4>Error</h4><p>Cannot find any device</p></div><div class="modal-footer"><a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a></div>';
+									$('.modal').append(content);
+									$('.modal').modal();
+								}
+
+								// set initial list
+								oDLonstart.devicesListOld = table2values('values');
+								//!D!console.log('load, table2values: ' + JSON.stringify(oDLonstart.devicesListOld)); 
+								//!D!console.log('load, oDLonstart.devicesList: ' + JSON.stringify(oDLonstart.devicesList)); 
+
+								onChange(JSON.stringify(Object.keys(oDLonstart.devicesList).sort()) === JSON.stringify(Object.keys(oDLonstart.devicesListOld)).sort());
+								
+								// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+								if (M) M.updateTextFields();
+								$('select').select();
+							});
+						}
+
+						onChange(false);
+						// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+						if (M) M.updateTextFields();
+						$('select').select();
+					});
 				});
-			}
+			} // load()
 
 			// This will be called by the admin adapter when the user presses the save button
-			function save(callback) {
+			function saveXXX(callback) {
 				// example: select elements with class=value and build settings object
 				var obj = {};
 				$('.value').each(function () {
@@ -270,7 +258,9 @@
 							obj[$this.attr('id')] = parseInt($this.val(), 10);
 							break;
 						default:
-							obj[$this.attr('id')] = $this.data('crypt') && $this.val() ? encrypt(secret, $this.val()) : $this.val();
+							obj[$this.attr('id')] = $this.data('fbPassword') && $this.val() ? encrypt(secret, $this.val()) : $this.val();
+							console.log('save, fbPassword: >' + obj[$this.attr('id')] + '<'); 
+							
 							break;
 					}
 				});
@@ -278,12 +268,61 @@
 				var objLO = obj.devicesList;
 				obj.devicesList = table2values('values');
 
-				obj.devicesListOld = objLO ? objLO : oDLonLoad.devicesList;
+				//!P! ??? obj.devicesListOld = objLO ? objLO : oDLonLoad.devicesList;
 
 				sendTo(adapter + '.' + instance, 'updateDevicesStatus', {});
 
 				callback(obj);
 			}
+			
+			
+            function saveHelper(obj, id, value) {
+                var ids = id.split('_');
+
+                if (ids.length === 1) {
+                    if (ids[0] === 'fbPassword') value = encrypt(secret, value);
+                    obj[id] = value;
+                } else if (ids.length === 2) {
+                    if (!obj[ids[0]]) obj[ids[0]] = {};
+                    obj[ids[0]][ids[1]] = value;
+                } else if (ids.length === 3) {
+                    if (!obj[ids[0]]) obj[ids[0]] = {};
+                    if (!obj[ids[0]][ids[1]]) obj[ids[0]][ids[1]] = {};
+                    obj[ids[0]][ids[1]][ids[2]] = value;
+                }
+                return obj;
+            } // saveHelper()
+
+            function getSettings() {
+                var obj = {};
+                $('.value').each(function () {
+                    var $this = $(this);
+                    var id = $this.attr('id');
+
+                    if ($this.attr('type') === 'checkbox') {
+                        obj = saveHelper(obj, id, $this.prop('checked'))
+                    } else {
+                        obj = saveHelper(obj, id, $this.val())
+                    }
+                });
+				
+				// get table
+				obj.devicesList = table2values('values');
+				console.log('load, obj.devicesList: ' + JSON.stringify(obj.devicesList)); 
+
+				// save old List
+				obj.devicesListOld = oDLonstart.devicesListOld;
+				oDLonstart.devicesListOld = obj.devicesList;		// prepare for compare if data only save, not save and close
+
+				// if list change, adapter update states ??? das Speichern löst doch einen Neustart des Adapters aus --> der liest dabei die config neu ein
+				//!P!if (obj.devicesList != obj.devicesListOld) sendTo(adapter + '.' + instance, 'updateDevicesStatus', {});
+
+                return obj;
+            } // getSettings()
+
+            function save(callback) {
+                callback(getSettings());
+            }
 		</script>
 	</head>
 
@@ -310,36 +349,36 @@
 
 					<div class="row">
 						<div class="col s2 input-field tooltip">
-							<input type="text" class="value" maxlength="15" id="fb_ip" />
-							<label for="fb_ip" class="translate">IP Fritzbox</label>
+							<input type="text" class="value" maxlength="15" id="fbIP" />
+							<label for="fbIP" class="translate">IP Fritzbox</label>
 							<span class="tooltiptext translate">Here you can enter the IP-Address from your Fritzbox</span>
 						</div>
 						<div class="col s2 input-field tooltip">
-							<input type="text" data-crypt="0" class="value" id="fb_uid" />
-							<label for="fb_uid" class="translate">Username</label>
+							<input type="text" data-crypt="0" class="value" id="fbUID" />
+							<label for="fbUID" class="translate">Username</label>
 							<span class="tooltiptext translate">Here you can enter the fritzbox user</span>
 						</div>
 						<div class="input-field col s3 tooltip">
-							<input type="password" data-crypt="1" class="value" id="fb_password" />
-							<label for="fb_password">fb_password</label>
+							<input type="password" data-crypt="1" class="value" id="fbPassword" />
+							<label for="fbPassword">password</label>
 							<span class="tooltiptext translate">Here you can enter the password for the Fritz!Box user</span>
 						</div>
 						<div class="col s2 input-field tooltip">
-							<input type="number" class="value" min="1" max="3600" id="fb_query_interval" />
-							<label for="fb_query_interval" class="translate">polling interval in seconds</label>
+							<input type="number" class="value" min="1" max="3600" id="fbQueryInterval" />
+							<label for="fbQueryInterval" class="translate">polling interval in seconds</label>
 							<span class="tooltiptext translate">Here you can define the polling interval [between 1 to 3600 seconds]</span>
 						</div>
 					</div>
 					<!-- End of row -->
 					<div class="row">
 						<div class="col s2 input-field tooltip">
-							<select class="value" id="warning_destination">
+							<select class="value" id="warningDestination">
 								<!--option value="" disabled selected class="translate">Choose your option</option-->
 								<option value="" class="translate">disabled</option>
 								<option value="log">log</option>
 								<option value="telegram.0">telegram</option>
 							</select>
-							<label for warning_destination class="translate">Select warning on change IP address</label>
+							<label for warningDestination class="translate">Select warning destination on change IP address</label>
 							<span class="tooltiptext translate">Here you can select an distination for warnings on changed IP.</span>
 						</div>
 						<!-- <div class="col s3 input-field tooltip">	

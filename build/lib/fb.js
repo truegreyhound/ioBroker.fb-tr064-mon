@@ -136,7 +136,7 @@ class Fb {
             return this.xmlToJSON(data, { explicitArray: false, mergeAttrs: true });
         });
     } // httpGetAsJson()
-    async checkServicesAsync(sFB_URL, aServices, callback) {
+    async checkServiceAsync(sFB_URL, aServices, callback) {
         const fctName = 'checkServicesAsync';
         try {
             for (let index = 0; index < aServices.length; index++) {
@@ -158,11 +158,15 @@ class Fb {
         catch (_a) {
             (err) => {
                 this.that.log.error(fctName + ', generell error: ' + JSON.stringify(err));
+                // FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
+                if (err && JSON.stringify(err).indexOf('reason: read ECONNRESET') >= 0) {
+                    this.that.log.warn(fctName + ', generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
+                }
                 this.fbCommunicationError = true;
                 callback(undefined, undefined);
             };
         }
-    }
+    } // checkServicesAsync()
     async chkServices(that) {
         let bFctState = false;
         const fctName = 'chkServices';
@@ -212,7 +216,7 @@ class Fb {
                 // for sService in ....
                 //!P! analog zu xmlToJSON in eine Function packen
                 const processToCheckedServices = async () => {
-                    await this.checkServicesAsync(sFB_URL, ajToCheckedServices, async (result, jServiceNames) => {
+                    await this.checkServiceAsync(sFB_URL, ajToCheckedServices, async (result, jServiceNames) => {
                         that.log.debug(fctName + ' result: ' + JSON.stringify(result));
                         const processServices = async () => {
                             return Promise.all(jServiceNames.map(async (sServiceCfg) => {
@@ -361,7 +365,11 @@ class Fb {
             }
         }
         catch (error) {
-            that.log.error(fctName + ', generell error: ' + error);
+            that.log.error(fctName + ', generell error: ' + JSON.stringify(error));
+            // FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
+            if (error && JSON.stringify(error).indexOf('reason: read ECONNRESET') >= 0) {
+                that.log.warn(fctName + ', generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
+            }
             this.fbCommunicationError = true;
             return false;
         }
@@ -543,11 +551,16 @@ class Fb {
             */
         }
         catch (error) {
-            that.log.error('chkServices, generell error: ' + error);
+            that.log.error('chkServices, generell error: ' + JSON.stringify(error));
+            // FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
+            if (error && JSON.stringify(error).indexOf('reason: read ECONNRESET') >= 0) {
+                that.log.warn('chkServices, generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
+            }
+            this.fbCommunicationError = true;
             return false;
         }
         return false;
-    } // chkServices()
+    } // chkServicesXX()
     async getSSLPort() {
         return new Promise((resolve, reject) => {
             async () => {
@@ -669,13 +682,13 @@ class Fb {
                         'charset': 'utf-8'
                     },
                     body: sBody
-                }, function (error, response, body) {
+                }, (error, response, body) => {
                     that.log.debug('soapAction, response: ' + oDevice.auth.chCount + ' ' + JSON.stringify(response));
                     //!T!that.log.debug('soapAction, body response: ' + body);
                     if (!error && response.statusCode == 200) {
-                        parseString(body, { explicitArray: false }, async function (err, result) {
-                            //this.that.log.debug('soapAction, soap1 ' + device._auth.chCount + ' ' + JSON.stringify(result));
-                            //let challange = false;
+                        parseString(body, { explicitArray: false }, async (err, result) => {
+                            this.that.log.debug('soapAction, soap1 ' + oDevice.auth.chCount + ' ' + JSON.stringify(result));
+                            //let challenge = false;
                             if (err)
                                 reject('soapAction ' + sAction + ' -> ' + error);
                             let res = {};
@@ -686,7 +699,7 @@ class Fb {
                                     const sHeader = env['s:Header'];
                                     if (sHeader['h:Challenge']) {
                                         const ch = sHeader['h:Challenge'];
-                                        //challange = true;
+                                        //challenge = true;
                                         if (oDevice.auth.chCount > 2) {
                                             reject('authentification failure');
                                         }
@@ -734,7 +747,7 @@ class Fb {
                                         reject('soapAction, device responded with fault ' + fault);
                                         res = fault;
                                         if (oDevice.auth.chCount > 1) {
-                                            that.log.debug('Fault ' + oDevice.auth.chCount + ' ' + JSON.stringify(fault));
+                                            that.log.error('soapAction, fault ' + oDevice.auth.chCount + ' ' + JSON.stringify(fault));
                                             reject('soapAction, device responded with fault: ' + JSON.stringify(fault));
                                         }
                                     }
@@ -762,6 +775,6 @@ class Fb {
             this.that.log.error('soapAction, error: ' + e.message);
         }
     }
-}
+} // soapAction()
 exports.Fb = Fb;
 //# sourceMappingURL=fb.js.map

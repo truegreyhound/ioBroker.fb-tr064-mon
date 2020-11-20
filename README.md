@@ -206,7 +206,7 @@ fb-tr-064.n.info.<state>
 ### connection
 the adapter is connected to the Fritzbox or not
 
-### fb_IP
+### fbIP
 the ip address of th Fritzbox
 
 ### fb_MAC
@@ -223,6 +223,7 @@ OS version of the Fritzbox
 
 
 ## Changelog 
+### 0.3.5 removing renamed old devices, fix configuration page
 
 ### 0.3.4 small fixes
 

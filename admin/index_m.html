@@ -68,37 +68,6 @@
 				}
 			}
 
-			function loadHelperXX(settings, onChange) {
-				// example: select elements with id=key and class=value and insert value
-				if (!settings) return;
-
-				$('.value').each(function () {
-					var $key = $(this);
-					var id = $key.attr('id');
-					if ($key.data('fbPassword') === 1) {
-						settings[id] = decrypt(secret, settings[id]);
-					}
-					if ($key.attr('type') === 'checkbox') {
-						// do not call onChange direct, because onChange could expect some arguments
-						$key.prop('checked', settings[id]).change(function () {
-							onChange();
-						});
-					} else {
-						// do not call onChange direct, because onChange could expect some arguments
-						$key.val(settings[id])
-							.change(function () {
-								onChange();
-							})
-							.keyup(function () {
-								onChange();
-							});
-					}
-				});
-				onChange(false);
-				// function Materialize.updateTextFields(); to reinitialize all the Materialize labels on the page if you are dynamically adding inputs.
-				M.updateTextFields();
-			}
-
 			function loadHelper(settings, param, subparam) {
                 if (!settings) return;
                 
@@ -189,9 +158,7 @@
 							console.log('load, sendTo(' + adapter + '.' + instance + ', \'updateDevicesList\', ...)'); 
 							sendTo(adapter + '.' + instance, 'updateDevicesList', { onlyActive: true, reread: false }, function (result) {
 								try {
-									console.log(result);
-									
-									console.log('load, sendTo finished with result: ' + result); 
+									//!D!console.log('load, sendTo finished with result: ' + result); 
 
 									var arr = JSON.parse(result);
 									if (arr.error) {
@@ -225,10 +192,10 @@
 
 								// set initial list
 								oDLonstart.devicesListOld = table2values('values');
-								//!D!console.log('load, table2values: ' + JSON.stringify(oDLonstart.devicesListOld)); 
-								//!D!console.log('load, oDLonstart.devicesList: ' + JSON.stringify(oDLonstart.devicesList)); 
+								//!D!console.log('load, table2values: ' + JSON.stringify(Object.keys(oDLonstart.devicesListOld).sort())); 
+								//!D!console.log('load, oDLonstart.devicesList: ' + JSON.stringify(Object.keys(oDLonstart.devicesList).sort())); 
 
-								onChange(JSON.stringify(Object.keys(oDLonstart.devicesList).sort()) === JSON.stringify(Object.keys(oDLonstart.devicesListOld)).sort());
+								onChange(JSON.stringify(Object.keys(oDLonstart.devicesList).sort()) !== JSON.stringify(Object.keys(oDLonstart.devicesListOld).sort()));
 								
 								// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
 								if (M) M.updateTextFields();
@@ -245,37 +212,6 @@
 			} // load()
 
 			// This will be called by the admin adapter when the user presses the save button
-			function saveXXX(callback) {
-				// example: select elements with class=value and build settings object
-				var obj = {};
-				$('.value').each(function () {
-					var $this = $(this);
-					switch ($this.attr('type')) {
-						case 'checkbox':
-							obj[$this.attr('id')] = $this.prop('checked');
-							break;
-						case 'number':
-							obj[$this.attr('id')] = parseInt($this.val(), 10);
-							break;
-						default:
-							obj[$this.attr('id')] = $this.data('fbPassword') && $this.val() ? encrypt(secret, $this.val()) : $this.val();
-							console.log('save, fbPassword: >' + obj[$this.attr('id')] + '<'); 
-							
-							break;
-					}
-				});
-				// get table
-				var objLO = obj.devicesList;
-				obj.devicesList = table2values('values');
-
-				//!P! ??? obj.devicesListOld = objLO ? objLO : oDLonLoad.devicesList;
-
-				sendTo(adapter + '.' + instance, 'updateDevicesStatus', {});
-
-				callback(obj);
-			}
-			
-			
             function saveHelper(obj, id, value) {
                 var ids = id.split('_');
 
@@ -314,8 +250,9 @@
 				obj.devicesListOld = oDLonstart.devicesListOld;
 				oDLonstart.devicesListOld = obj.devicesList;		// prepare for compare if data only save, not save and close
 
-				// if list change, adapter update states ??? das Speichern löst doch einen Neustart des Adapters aus --> der liest dabei die config neu ein
-				//!P!if (obj.devicesList != obj.devicesListOld) sendTo(adapter + '.' + instance, 'updateDevicesStatus', {});
+				// start scheduler for update device status
+				//!P!if (obj.devicesList != obj.devicesListOld) 
+				sendTo(adapter + '.' + instance, 'updateDevicesStatus', {});
 
                 return obj;
             } // getSettings()
@@ -381,17 +318,6 @@
 							<label for warningDestination class="translate">Select warning destination on change IP address</label>
 							<span class="tooltiptext translate">Here you can select an distination for warnings on changed IP.</span>
 						</div>
-						<!-- <div class="col s3 input-field tooltip">	
-							<input class="value" id="XXX" type="checkbox" />
-							<label for="XXX" class="translate">XXXXXX</label>
-							<span class="translate"></span>
-							<span class="tooltiptext translate">Here you can xxxxx.</span>
-						</div> -->
-						<!-- <div class="col s4 input-field tooltip">	
-							<input type="text" class="value" id="dateformat"/>
-							<label for="dateformat" class="translate">Date format</label>
-							<span class="tooltiptext translate">Here you can enter the date format string for the tables.</span>
-						</div> -->
 					</div>
 					<!-- End of row -->
 				</div>
@@ -422,12 +348,14 @@
 											<th data-name="_index" style="width: 5%;" class="center-align translate"></th>
 											<th data-name="devicename" style="width: 25%;" class="translate" for="devicename">device name</th>
 											<th data-name="macaddress" style="width: 25%;" class="translate" for="macaddress">MAC address</th>
-											<th data-name="ipaddress" style="width: 30%;" class="translate" for="ipaddress">ip address</th>
-											<th data-name="ownername" style="width: 25%;" class="translate" for="ownername">owner name</th>
+											<th data-name="ipaddress" style="width: 25%;" class="translate" for="ipaddress">ip address</th>
+											<th data-name="new" style="width: 5%;" data-type="checkbox" class="translate" for="new">new</th>
+											<th data-name="changed" style="width: 5%;" data-type="checkbox" class="translate" for="changed">changed</th>
+											<th data-name="ownername" style="width: 30%;" class="translate" for="ownername">owner name</th>
 											<th data-name="interfacetype" style="width: 25%;" class="translate" for="interfacetype">interface</th>
-											<th data-name="warn" style="width: 15%;" data-type="checkbox" class="translate">warn</th>
-											<th data-name="watch" style="width: 15%;" data-type="checkbox" class="translate">watch</th>
-											<!--											<th data-buttons="delete" style="width: 5%"></th> -->
+											<th data-name="warn" style="width: 10%;" data-type="checkbox" class="translate">warn</th>
+											<th data-name="watch" style="width: 10%;" data-type="checkbox" class="translate">watch</th>
+											<!-- <th data-buttons="delete" style="width: 5%"></th> -->
 										</tr>
 									</thead>
 								</table>

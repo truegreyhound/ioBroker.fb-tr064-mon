@@ -1,12 +1,25 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 /* eslint-disable @typescript-eslint/camelcase */
 'use strict';
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /*
- * Created with @iobroker/create-adapter v1.28.0
+ * Created with @iobroker/create-adapter v1.30.1
  */
 /* !P!
+2020-12-04 11:42:51.578  - [34mdebug[39m: fb-tr-064.0 (6804) soapAction, request url https://192.168.200.101:49443/upnp/control/hosts; body: <?xml version="1.0" encoding="utf-8"?><s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ><s:Header><h:ClientAuth xmlns:h="http://soap-authentication.org/digest/2001/10/"s:mustUnderstand="1"><Nonce>99653D01ADA9D644</Nonce><Auth>2ca5df78159456923b285791c7159d2a</Auth><UserID>TR064</UserID><Realm>F!Box SOAP-Auth</Realm></h:ClientAuth></s:Header><s:Body><u:X_AVM-DE_GetHostListPath xmlns:u="urn:dslforum-org:service:Hosts:1"></u:X_AVM-DE_GetHostListPath></s:Body></s:Envelope>
+>> timeout --> warn in log, Timeoutzähler, nach n Fehler ErrorMsg in Log und Adapter disable oder ?
+
+
 Sortierung deviceName case intensitive
+
+Liste für Adapter-Config um Spalten new und changed ergänzen und füllen --> bessere Übersicht
 
 Das Handling mit deviceName und Hostname muss noch mal geprüft werden.
 Initial soll deviceName == hostName von der Fritzbox sein, beide Felder sind in der CFG zu füllen.
@@ -39,7 +52,7 @@ c)	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
 */
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
-const utils = require("@iobroker/adapter-core");
+const utils = __importStar(require("@iobroker/adapter-core"));
 // Load your modules here, e.g.:
 // import * as fs from 'fs';
 // load your modules here, e.g.:
@@ -47,11 +60,10 @@ const utils = require("@iobroker/adapter-core");
 //!P!import dateFormat = require('dateformat');
 //!P!import {parse, stringify} from 'flatted';
 //own libraries
-const c = require("./lib/constants");
-const mFb = require("./lib/fb");
+const c = __importStar(require("./lib/constants"));
+const mFb = __importStar(require("./lib/fb"));
 //import mFb = require('./lib/fb');
 const mFbObj = require("./lib/instance-objects");
-const adapter_core_1 = require("@iobroker/adapter-core");
 //!P!import Flatted = require('flatted');
 let maAllDevices = [];
 let mScheduleStatus = null;
@@ -131,48 +143,49 @@ function createDeviceStatusLists(that, aDevices) {
             // get configured parameter for device like macaddress, watch, warn, ...
             const oCfgData = that.config.devicesList.find((item) => { return item.macaddress === oDevice.MACAddress; });
             that.log.debug(fctName + ', oCfgData: ' + JSON.stringify(oCfgData));
-            if (oCfgData || bInitial) {
-                // known device in adapter config, remove from known list
-                aAllConfiguredDevices.splice(aAllConfiguredDevices.findIndex(item => item.macaddress === oDevice.MACAddress), 1);
-                if (oDevice.IPAddress == that.config.fbIP) {
-                    // fb
-                    that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
-                    that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
-                }
-                else {
-                    let sDevice = '{"Active": "' + (oDevice.Active == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"';
-                    that.log.debug(fctName + ', sDevice: ' + sDevice);
-                    if (!bInitial && oCfgData && oCfgData.warn === true)
-                        aDeviceList_Warn.push(JSON.parse(sDevice + '}'));
-                    if (oDevice.Active == "0") { // inactive
-                        aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
-                        maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
-                        if (!bInitial && oCfgData && oCfgData.warn === true)
-                            aDeviceList_Warn_inactive.push(JSON.parse(sDevice + '}'));
-                    }
-                    else {
-                        // device active
-                        sDevice += ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '", "Guest": "' + oDevice['X_AVM-DE_Guest'] + '"}';
-                        maAllDevices.push(JSON.parse(sDevice));
-                        aAllActiveDevices.push(JSON.parse(sDevice));
-                        if (oDevice.InterfaceType == 'Ethernet')
-                            aAllActiveLANDevices.push(JSON.parse(sDevice));
-                        if (oDevice.InterfaceType == '802.11')
-                            aAllActiveWLANDevices.push(JSON.parse(sDevice));
-                        if (oDevice.Guest == '1')
-                            aAllActiveGuestsDevices.push(JSON.parse(sDevice));
-                        if (!bInitial && oCfgData && oCfgData.warn === true)
-                            aDeviceList_Warn_active.push(JSON.parse(sDevice));
-                    }
-                }
+            // known device in adapter config, remove from known list
+            aAllConfiguredDevices.splice(aAllConfiguredDevices.findIndex(item => item.macaddress === oDevice.MACAddress), 1);
+            if (oDevice.IPAddress == that.config.fbIP) {
+                // fb
+                that.setStateChangedAsync(c.idFritzBoxIP, oDevice.IPAddress);
+                that.setStateChangedAsync(c.idFritzBoxMAC, oDevice.MACAddress);
             }
             else {
-                if (oDevice.IPAddress !== that.config.fbIP) {
+                let sDevice = '{"Active": "' + (oDevice.Active == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"';
+                that.log.debug(fctName + ', sDevice: ' + sDevice);
+                if (!oCfgData) {
                     // new device without adapter config
-                    let sDevice = '{"Active": "' + (oDevice.Active == '1' ? true : false) + '", "IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"}';
-                    let sDeviceMsg = 'HostName: "' + oDevice.HostName + '"; MACAddress: "' + oDevice.MACAddress + '"; IPAddress: "' + oDevice.IPAddress + '";  active: ' + (oDevice.Active == '1' ? true : false);
-                    that.log.warn('New device detected,  ' + sDeviceMsg);
-                    aNewDevices.push(JSON.parse(sDevice));
+                    sDevice = sDevice + ',  "new": "' + true + '",  "changed": "' + false + '"';
+                    if (!bInitial) {
+                        let sDeviceMsg = 'HostName: "' + oDevice.HostName + '"; MACAddress: "' + oDevice.MACAddress + '"; IPAddress: "' + oDevice.IPAddress + '";  active: ' + (oDevice.Active == '1' ? true : false) + '";  new: ' + true + '";  changed: ' + false;
+                        that.log.warn('New device detected, ' + sDeviceMsg);
+                        aNewDevices.push(JSON.parse(sDevice + '}'));
+                    }
+                }
+                else {
+                    sDevice = sDevice + ',  "new": "' + false + '",  "changed": "' + oCfgData.changed + '"';
+                }
+                if (!bInitial && oCfgData && oCfgData.warn === true)
+                    aDeviceList_Warn.push(JSON.parse(sDevice + '}'));
+                if (oDevice.Active == "0") { // inactive
+                    aAllInactiveDevices.push(JSON.parse(sDevice + '}'));
+                    maAllDevices.push(JSON.parse(sDevice + sDeviceExt));
+                    if (!bInitial && oCfgData && oCfgData.warn === true)
+                        aDeviceList_Warn_inactive.push(JSON.parse(sDevice + '}'));
+                }
+                else {
+                    // device active
+                    sDevice += ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '", "Guest": "' + oDevice['X_AVM-DE_Guest'] + '"}';
+                    maAllDevices.push(JSON.parse(sDevice));
+                    aAllActiveDevices.push(JSON.parse(sDevice));
+                    if (oDevice.InterfaceType == 'Ethernet')
+                        aAllActiveLANDevices.push(JSON.parse(sDevice));
+                    if (oDevice.InterfaceType == '802.11')
+                        aAllActiveWLANDevices.push(JSON.parse(sDevice));
+                    if (oDevice.Guest == '1')
+                        aAllActiveGuestsDevices.push(JSON.parse(sDevice));
+                    if (!bInitial && oCfgData && oCfgData.warn === true)
+                        aDeviceList_Warn_active.push(JSON.parse(sDevice));
                 }
             }
         });
@@ -193,10 +206,10 @@ function createDeviceStatusLists(that, aDevices) {
         that.setStateChangedAsync(c.idCountDevicesActiveWLAN, aAllActiveWLANDevices.length);
         //that.log.debug(fctName + ', aAllActiveGuestsDevices.length: ' + JSON.stringify(aAllActiveGuestsDevices.length));
         that.setStateChangedAsync(c.idCountDevicesActiveGuests, aAllActiveGuestsDevices.length);
-        that.setStateChangedAsync(c.idDeviceList_IPChanged, (that.config.devicesList_IPChanged) ? that.config.devicesList_IPChanged : false);
-        that.setStateChangedAsync(c.idDeviceList_OwnerChanged, (that.config.devicesList_OwnerChanged) ? that.config.devicesList_OwnerChanged : false);
-        that.setStateChangedAsync(c.idDeviceList_WarnChanged, (that.config.devicesList_WarnChanged) ? that.config.devicesList_WarnChanged : false);
-        that.setStateChangedAsync(c.idDeviceList_WatchChanged, (that.config.devicesList_WatchChanged) ? that.config.devicesList_WatchChanged : false);
+        that.setStateChangedAsync(c.idDeviceList_IPChanged, (that.config.devicesListIPChanged) ? that.config.devicesListIPChanged : false);
+        that.setStateChangedAsync(c.idDeviceList_OwnerChanged, (that.config.devicesListOwnerChanged) ? that.config.devicesListOwnerChanged : false);
+        that.setStateChangedAsync(c.idDeviceList_WarnChanged, (that.config.devicesListWarnChanged) ? that.config.devicesListWarnChanged : false);
+        that.setStateChangedAsync(c.idDeviceList_WatchChanged, (that.config.devicesListWatchChanged) ? that.config.devicesListWatchChanged : false);
         that.setStateChangedAsync(c.idDeviceList_NewAddedDevices_JSON, JSON.stringify(aNewDevices));
         if (aAllConfiguredDevices.length > 0) {
             //!P!that.log.warn('Following known devices removed from Fritz!Box network list: ' + JSON.stringify(aAllConfiguredDevices));
@@ -242,10 +255,12 @@ class FbTr064 extends utils.Adapter {
                         this.log.info('check group user admin group admin: ' + result);
             */
             // <<<<<<<<<<<<<<<<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            this.log.info('onReady start ' + adapter_core_1.adapter.name + '; ip-address: ' + this.config.fbIP + '; polling interval: ' + this.config.fbQueryInterval + ' sec.');
+            //!P!			this.log.info('onReady start ' + adapter.name + '; ip-address: ' + this.config.fbIP + '; polling interval: ' + this.config.fbQueryInterval + ' sec.');
+            this.log.info('onReady start -++*** fb-tr-064; ip-address: ' + this.config.fbIP + '; polling interval: ' + this.config.fbQueryInterval + ' sec. ***++-');
             if (this.config.fbUID === '' || this.config.fbPassword === '' || this.config.fbIP === '') {
                 this.log.error('onReady, Please set the connection params (ip, user, password, etc.) in the adapter options before starting the adapter!');
                 this.setState('info.connection', { val: false, ack: true });
+                this.setForeignState("system.adapter." + this.namespace + ".alive", false); // stop adapter
                 return;
             }
             else {
@@ -261,9 +276,9 @@ class FbTr064 extends utils.Adapter {
                 else {
                     this.config.fbPassword = decrypt('SdoeQ85NTrg1B0FtEyzf', this.config.fbPassword);
                 }
-                this.log.debug('onReady, configuration fbIP: ' + this.config.fbIP);
+                //this.log.debug('onReady, configuration fbIP: ' + this.config.fbIP);
                 this.log.debug('onReady, configuration fbUID: ' + this.config.fbUID);
-                this.log.debug('onReady, configuration fbPassword: ' + this.config.fbPassword);
+                //this.log.debug('onReady, configuration fbPassword: ' + this.config.fbPassword);
                 this.log.debug('onReady, configuration warningDestination: ' + this.config.warningDestination);
                 // eslint-disable-next-line @typescript-eslint/camelcase
                 this.config.fbPort = 49000;
@@ -286,7 +301,7 @@ class FbTr064 extends utils.Adapter {
                 //this.log.debug('mFbClass: ' + Flatted.stringify(mFbClass));
                 // check available services
                 let bResult = await mFbClass.chkServices(this);
-                this.log.debug('onReady, FbchkServices, bResult: ' + bResult);
+                this.log.debug('onReady, mFbClass.chkServices, bResult: ' + bResult);
                 // check adapter configuration user/password
                 if (!mFbClass.fbCommunicationError && this.config.fbUID != '' && this.config.fbPassword != '') {
                     const resultGSP = await mFbClass.soapAction(mFbClass, '/upnp/control/deviceinfo', 'urn:dslforum-org:service:DeviceInfo:1', c.GetSecurityPort, null);
@@ -309,6 +324,7 @@ class FbTr064 extends utils.Adapter {
             this.setState('info.connection', { val: false, ack: true });
             this.log.error('onReady: ' + e.message);
         }
+        this.log.debug('onReady finished');
     } // onReady()
     async updateDevicesStatus() {
         const fctName = 'updateDevicesStatus';
@@ -317,6 +333,10 @@ class FbTr064 extends utils.Adapter {
         if (!mFbClass) {
             this.log.debug('updateDevicesStatus, \'mFbClass\' not initialice, return');
             return;
+        }
+        if (mScheduleStatus) {
+            clearInterval(mScheduleStatus);
+            mScheduleStatus = null;
         }
         if (!mFbClass.fbCommunicationError && this.config.fbUID != '' && this.config.fbPassword != '') {
             // get network devices from Fritz!Box
@@ -332,7 +352,7 @@ class FbTr064 extends utils.Adapter {
             }
             // update periodical
             this.log.debug(fctName + ', this.config.devicesList.length: ' + this.config.devicesList.length + '; GetSecurityPort: ' + (c.supportedFunctions.findIndex(x => x === 'GetSecurityPort') >= 0));
-            if (mScheduleStatus == null && this.config.devicesList.length > 0 && (c.supportedFunctions.findIndex(x => x === 'GetSecurityPort') >= 0)) {
+            if (!mScheduleStatus && this.config.devicesList.length > 0 && (c.supportedFunctions.findIndex(x => x === 'GetSecurityPort') >= 0)) {
                 mScheduleStatus = setInterval(() => this.updateDevicesStatus(), this.config.fbQueryInterval * 1000);
                 this.log.debug(fctName + ', scheduler for updateDevicesStatus created, run all ' + this.config.fbQueryInterval + ' seconds');
             }
@@ -349,8 +369,10 @@ class FbTr064 extends utils.Adapter {
         try {
             this.setState('info.connection', { val: false, ack: true });
             this.log.info('cleaned everything up...');
-            clearInterval(mScheduleStatus);
-            mScheduleStatus = null;
+            if (mScheduleStatus) {
+                clearInterval(mScheduleStatus);
+                mScheduleStatus = null;
+            }
             callback();
         }
         catch (e) {
@@ -471,6 +493,8 @@ class FbTr064 extends utils.Adapter {
                                 ownername: ((aCfgDevicesListItem) ? aCfgDevicesListItem.ownername : ''),
                                 interfacetype: (oDevice.InterfaceType != '') ? oDevice.InterfaceType : ((aCfgDevicesListItem) ? aCfgDevicesListItem.interfacetype : ''),
                                 active: (oDevice.active == '1' ? true : false),
+                                new: ((aCfgDevicesListItem) ? aCfgDevicesListItem.new : false),
+                                changed: ((aCfgDevicesListItem) ? aCfgDevicesListItem.changed : false),
                                 warn: ((aCfgDevicesListItem) ? aCfgDevicesListItem.warn : false),
                                 watch: ((aCfgDevicesListItem) ? aCfgDevicesListItem.watch : false),
                                 guest: (oDevice.guest == '1' ? true : false)
@@ -521,4 +545,3 @@ else {
     // otherwise start the instance directly
     (() => new FbTr064())();
 }
-//# sourceMappingURL=main.js.map

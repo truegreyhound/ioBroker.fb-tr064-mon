@@ -1,3 +1,4 @@
+// Specialized tsconfig to only compile .ts-files in the src dir
 {
 	"extends": "./tsconfig.json",
 	// Modified config to only compile .ts-files in the src dir

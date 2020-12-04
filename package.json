@@ -1,6 +1,6 @@
 {
 	"name": "iobroker.fb-tr-064",
-	"version": "0.3.5",
+	"version": "0.3.6",
 	"description": "read Fritzbox data over TR-064",
 	"author": {
 		"name": "truegreyhound",
@@ -18,10 +18,6 @@
 		"netmon"
 	],
 	"repository": {
-		"type": "git",
-		"url": "ssh://git@influx-01.fritz.box/var/git/repos/pub/ioBroker/adapter/fb-tr-064.git/"
-	},
-	"repositoryXX": {
 		"type": "git",
 		"url": "https://github.com/truegreyhound/ioBroker.fb-tr-064"
 	},

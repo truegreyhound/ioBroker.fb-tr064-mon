@@ -223,6 +223,8 @@ OS version of the Fritzbox
 
 
 ## Changelog 
+### 0.3.6 add new and change flag in device table, so if clear which device is new or changed
+
 ### 0.3.5 removing renamed old devices, fix configuration page
 
 ### 0.3.4 small fixes

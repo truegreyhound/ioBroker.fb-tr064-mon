@@ -1,7 +1,14 @@
 'use strict';
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const util = require("util");
-const c = require("./constants");
+const c = __importStar(require("./constants"));
 async function setStateAsyncEx(that, _id, _value, _common, _setValueOnlyStateCreated = false, _setValueDelay = 0) {
     that.log.debug('setStateAsyncEx started for id "' + _id + '"; value: ' + _value + '; common: ' + JSON.stringify(_common) + '"; _setValueOnlyStateCreated: ' + _setValueOnlyStateCreated);
     let bValueChanged = false;
@@ -230,6 +237,9 @@ async function updateDevices(that, aCfgDevicesList, aAllDevices) {
                 that.log.warn('device "' + oCfgDevice.devicename + '" goes off');
             }
         }
+        const idx = aCfgDevicesList.indexOf(oCfgDevice);
+        aCfgDevicesList[idx].new = false;
+        aCfgDevicesList[idx].changed = false;
         if (oDeviceData) {
             if (oDeviceData.IPAddress != oCfgDevice.ipaddress) {
                 // IP has changed
@@ -240,9 +250,9 @@ async function updateDevices(that, aCfgDevicesList, aAllDevices) {
                     that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
                 }
                 // update aCfgDevicesList
-                const idx = aCfgDevicesList.indexOf(oCfgDevice);
                 if (idx >= 0) {
                     aCfgDevicesList[idx].ipaddress = oDeviceData.IPAddress;
+                    aCfgDevicesList[idx].changed = true;
                     bDataChangedIP = true;
                 }
             }
@@ -279,12 +289,12 @@ async function updateDevices(that, aCfgDevicesList, aAllDevices) {
             }
         }
     });
-    if (bDataChangedIP)
+    if (bDataChangedIP || bDataChangedOwner || bDataChangedWarn || bDataChangedWatch)
         that.config.devicesList = aCfgDevicesList;
-    that.config.devicesList_IPChanged = bDataChangedIP;
-    that.config.devicesList_OwnerChanged = bDataChangedOwner;
-    that.config.devicesList_WarnChanged = bDataChangedWarn;
-    that.config.devicesList_WatchChanged = bDataChangedWatch;
+    that.config.devicesListIPChanged = bDataChangedIP;
+    that.config.devicesListOwnerChanged = bDataChangedOwner;
+    that.config.devicesListWarnChanged = bDataChangedWarn;
+    that.config.devicesListWatchChanged = bDataChangedWatch;
     that.config.devicesListOld = JSON.parse(JSON.stringify(that.config.devicesList));
     that.log.debug(fctNameId + ', config.devicesListOld: ' + JSON.stringify(that.config.devicesListOld));
     that.log.debug(fctNameId + ' finished');
@@ -603,4 +613,3 @@ async function delete_oldDeviceData(that, oCfgDevice) {
     }
     that.log.debug(fctNameId + ' finished');
 } // delete_oldDeviceData()
-//# sourceMappingURL=instance-objects.js.map

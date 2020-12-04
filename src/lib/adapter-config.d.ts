@@ -1,18 +1,25 @@
 // This file extends the AdapterConfig type from "@types/iobroker"
-// using the actual properties present in io-package.json
-// in order to provide typings for adapter.config properties
 
-import { native } from '../io-package.json';
-
-type _AdapterConfig = Partial<typeof native>;
 
 // Augment the globally declared type ioBroker.AdapterConfig
 declare global {
 	namespace ioBroker {
 		// tslint-disable-next-line:no-empty-interface
 		interface AdapterConfig extends _AdapterConfig {
-			// Do not enter anything here!
+			"fbIP": "",
+			"fbPort": 49000,
+			"fbUID": "",
+			"fbPassword": "",
+			"warningDestination": "",
+			"devicesList": [],
+			"devicesListOld": [],
+			"devicesListIPChanged": false,
+			"devicesListOwnerChanged": false,
+			"devicesListWarnChanged": false,
+			"devicesListWatchChanged": false
 		}
-
 	}
 }
+
+// this is required so the above AdapterConfig is found by TypeScript / type checking
+export {};

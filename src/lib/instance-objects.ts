@@ -271,6 +271,10 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 			}
 		}
 
+		const idx: number = aCfgDevicesList.indexOf(oCfgDevice);
+		aCfgDevicesList[idx].new = false;
+		aCfgDevicesList[idx].changed = false;
+
 		if (oDeviceData) {
 			if (oDeviceData.IPAddress != oCfgDevice.ipaddress) {
 				// IP has changed
@@ -285,9 +289,9 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 				}
 
 				// update aCfgDevicesList
-				const idx: number = aCfgDevicesList.indexOf(oCfgDevice);
 				if (idx >= 0) {
 					aCfgDevicesList[idx].ipaddress = oDeviceData.IPAddress;
+					aCfgDevicesList[idx].changed = true;
 					bDataChangedIP = true;
 				}
 			}
@@ -323,16 +327,15 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 					// watch has changed
 					bDataChangedWatch = true;
 				}
-
 			}
 		}
 	});
 
-	if (bDataChangedIP) that.config.devicesList = aCfgDevicesList;
-	that.config.devicesList_IPChanged = bDataChangedIP;
-	that.config.devicesList_OwnerChanged = bDataChangedOwner;
-	that.config.devicesList_WarnChanged = bDataChangedWarn;
-	that.config.devicesList_WatchChanged = bDataChangedWatch;
+	if (bDataChangedIP || bDataChangedOwner || bDataChangedWarn || bDataChangedWatch) that.config.devicesList = aCfgDevicesList;
+	that.config.devicesListIPChanged = bDataChangedIP;
+	that.config.devicesListOwnerChanged = bDataChangedOwner;
+	that.config.devicesListWarnChanged = bDataChangedWarn;
+	that.config.devicesListWatchChanged = bDataChangedWatch;
 
 	that.config.devicesListOld = JSON.parse(JSON.stringify(that.config.devicesList));
 	that.log.debug(fctNameId + ', config.devicesListOld: ' + JSON.stringify(that.config.devicesListOld));

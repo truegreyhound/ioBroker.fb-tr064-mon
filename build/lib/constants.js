@@ -60,4 +60,3 @@ exports.idnDeviceFbSpeed = 'speed';
 exports.idnDeviceFbGuest = 'guest';
 exports.idnDeviceFbWarn = 'warn';
 exports.idnDeviceFbWatch = 'watch';
-//# sourceMappingURL=constants.js.map

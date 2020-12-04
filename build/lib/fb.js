@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 'use strict';
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const parseString = require('xml2js').parseString;
 const fetch = require('node-fetch'); // bei "import fetch = require('node-fetch');" kommt es zu folgendem Fehler:
@@ -8,7 +15,7 @@ const crypto = require("crypto");
 //const axios = require("axios");
 const util = require("util");
 //const EventEmitter = require('events');
-const c = require("./constants");
+const c = __importStar(require("./constants"));
 const mFbObj = require("./instance-objects");
 /**
  * fritz box
@@ -170,6 +177,7 @@ class Fb {
     async chkServices(that) {
         let bFctState = false;
         const fctName = 'chkServices';
+        that.log.debug(fctName + ' started');
         try {
             // check version of box has change
             const dpvSFFB_version = await mFbObj.getStateValAsyncEx(that, c.idSupportedFunctions_FritzBoxVersion, '');
@@ -254,79 +262,10 @@ class Fb {
                         };
                         await processServices();
                     });
-                    that.log.debug('Done');
-                };
+                    that.log.debug('checkServiceAsync done');
+                }; // processToCheckedServices()
                 await processToCheckedServices();
-                /*
-                                const processToCheckedServicesX = async () => {
-                                    return Promise.all(ajToCheckedServices.map(async (sCheckService) => {
-                                        that.log.debug(fctName + ' ajToCheckedServices.foreach, sCheckService: ' + sCheckService);
-                                        const jCheckService = JSON.parse(sCheckService);
-                                        that.log.debug(fctName + ', jCheckService.serviceNames: ' + JSON.stringify(jCheckService.serviceNames));
-                                        const jServiceNames: Array<string> = jCheckService.serviceNames;
-                                        that.log.debug(fctName + ', jCheckService jServiceNames2: ' + JSON.stringify(jServiceNames));
-                                        const sChkServiceUrl: string = sFB_URL + jCheckService.urlPath;
-                                        that.log.debug(fctName + ' ajToCheckedServices.foreach, sChkServiceUrl: ' + sChkServiceUrl);
-                
-                //						const result: any = await this.httpGetAsJson(sChkServiceUrl);
-                //						that.log.debug(fctName + ' result: ' + JSON.stringify(result));
-                
-                                    const queryFB = async () => {
-                                        await this.httpGetAsJson(sChkServiceUrl), async (result: any) => {
-                                            that.log.debug(fctName + ' result: ' + JSON.stringify(result));
-                        
-                                            const processServices = async () => {
-                                                return Promise.all(jServiceNames.map(async (sServiceCfg: string) => {
-                                                    that.log.debug(fctName + ' serviceNames.foreach, sServiceCfg: ' + sServiceCfg);
-                                    
-                                                    const jServiceCfg = JSON.parse(sServiceCfg);
-                                                    const found = JSON.stringify(result).search(jServiceCfg.serviceName);
-                                
-                                                    if (found == -1) {
-                                                        that.log.warn(fctName + ', sService "' + jServiceCfg.serviceName + '" is not supported');
-                                                        mFbObj.setStateAsyncEx(that, c.dppFB_Info_SupportedFunctions + jServiceCfg.id, false, {
-                                                            name: jServiceCfg.serviceName,
-                                                            type: 'boolean',
-                                                            role: 'info',
-                                                            def: false,
-                                                            read: true,
-                                                            write: false,
-                                                            desc: jServiceCfg.serviceName,
-                                                        });
-                            
-                                                        return;
-                                                    } else {
-                                                        that.log.debug(fctName + ', sService "' + jServiceCfg.serviceName + '" is supported');
-                                                        mFbObj.setStateAsyncEx(that, c.dppFB_Info_SupportedFunctions + jServiceCfg.id, true, {
-                                                            name: jServiceCfg.serviceName,
-                                                            type: 'boolean',
-                                                            role: 'info',
-                                                            def: false,
-                                                            read: true,
-                                                            write: false,
-                                                            desc: jServiceCfg.serviceName,
-                                                        });
-                                                        
-                                                        c.supportedFunctions.push(jServiceCfg.id);
-                            
-                                                        return;
-                                                    }
-                                                }))
-                                            };
-                
-                                            await processServices();
-                                        }
-                                    }
-                
-                                    await queryFB();
-                                    }))
-                                    .catch(err => {
-                                        console.log('err: ' + err);
-                                    });
-                                };
-                
-                                //await processToCheckedServices();
-                                */
+                that.log.debug('processToCheckedServices done');
                 // update version information  
                 that.setStateChangedAsync(c.idSupportedFunctions_FritzBoxVersion, sFB_version, true);
                 bFctState = true;
@@ -371,15 +310,14 @@ class Fb {
                 that.log.warn(fctName + ', generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
             }
             this.fbCommunicationError = true;
+            that.log.debug(fctName + ' finished with error: FALSE');
             return false;
         }
+        that.log.debug(fctName + ' finished with: ' + bFctState);
         return bFctState;
     } // chkServices()
     async chkServicesXX(that) {
         try {
-            //			return new Promise((resolve, reject) => {
-            //let promise = new Promise((resolve, reject) => {
-            //				async () => {
             // check version ofbox has change
             const dpoFB_version = await that.getStateAsync(c.idFritzBoxVersion);
             const dpvFB_version = dpoFB_version.val;
@@ -401,7 +339,6 @@ class Fb {
                 }, async function (err, result) {
                     if (err) {
                         that.log.error('chkServices, parseString1, error: ' + err);
-                        //									reject('chkServices, parseString1: ' + err);
                         return false;
                     }
                     else {
@@ -447,7 +384,6 @@ class Fb {
                                     }, function (err, result) {
                                         if (err) {
                                             that.log.error('chkServices, parseString2, error: ' + err);
-                                            //														reject('chkServices, parseStrin2: ' + err);
                                             return false;
                                         }
                                         else
@@ -494,7 +430,6 @@ class Fb {
                             });
                             // update version information  
                             that.setStateAsync(c.idFritzBoxVersion, sFB_version);
-                            //										resolve(true);
                             return true;
                         }
                         else {
@@ -505,13 +440,11 @@ class Fb {
                             await that.getStatesAsync(c.dppFB_Info_SupportedFunctions + '*')
                                 .catch((err) => {
                                 that.log.error('chkServices, error: ' + JSON.stringify(err));
-                                //											reject('chkServices, error: ' + JSON.stringify(err));
                                 return false;
                             })
                                 .then(async (idSupportedFunctions) => {
                                 if (!idSupportedFunctions) {
                                     that.log.error('chkServices, error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
-                                    //												reject('chkServices, error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
                                     return false;
                                 }
                                 else {
@@ -532,23 +465,10 @@ class Fb {
                         }
                     }
                 });
-                //that.emit('chkServices_Finished');
                 that.log.debug('chkServices finished');
-                //							resolve(true);
                 return true;
             });
-            //						reject('chkServices, fetch failed');
             return false;
-            //				};
-            //			});
-            /*			promise.then(function(result) {
-                            //console.log(result); // "Stuff worked!"
-                            return <boolean>result;
-                          }, function(err) {
-                            //console.log(err); // Error: "It broke"
-                            return false;
-                        });
-            */
         }
         catch (error) {
             that.log.error('chkServices, generell error: ' + JSON.stringify(error));
@@ -681,7 +601,8 @@ class Fb {
                         'Content-Type': 'text/xml',
                         'charset': 'utf-8'
                     },
-                    body: sBody
+                    body: sBody,
+                    timeout: 180000
                 }, (error, response, body) => {
                     that.log.debug('soapAction, response: ' + oDevice.auth.chCount + ' ' + JSON.stringify(response));
                     //!T!that.log.debug('soapAction, body response: ' + body);
@@ -777,4 +698,3 @@ class Fb {
     }
 } // soapAction()
 exports.Fb = Fb;
-//# sourceMappingURL=fb.js.map

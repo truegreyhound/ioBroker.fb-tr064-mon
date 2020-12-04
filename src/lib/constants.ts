@@ -45,6 +45,8 @@ export interface IDevice {
 	ownername: string;
 	active: boolean;
 	interfacetype: string;
+	new: boolean;
+	changed: boolean;
 	warn: boolean;
 	watch: boolean;
 	guest: boolean;

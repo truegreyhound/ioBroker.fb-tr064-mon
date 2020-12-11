@@ -16,7 +16,8 @@ declare global {
 			"devicesListIPChanged": false,
 			"devicesListOwnerChanged": false,
 			"devicesListWarnChanged": false,
-			"devicesListWatchChanged": false
+			"devicesListWatchChanged": false,
+			"ignoreSpeed": false
 		}
 	}
 }

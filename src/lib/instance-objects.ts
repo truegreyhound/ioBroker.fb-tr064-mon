@@ -24,7 +24,7 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 				if(_setValueDelay > 0) {
 					await that.getStateAsync(_id)
 					.then((obj:any) => {
-						that.log.debug('getStateAsyncEx, getStateAsync, obj:' + JSON.stringify(obj) + '<<<');
+						that.log.debug('getStateAsyncEx, getStateAsync(' + _id + '):' + JSON.stringify(obj) + '<<<');
 
 						if(obj.val != _value) {
 							bValueChanged = true;
@@ -183,6 +183,9 @@ export async function createInstanceRootObjects(that: any): Promise<void> {
 			[c.idDeviceList_Warn_inactive_JSON, 'state', c.idDeviceList_Warn_inactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched inactive devices'],
 			[c.idDeviceList_NewAddedDevices_JSON, 'state', c.idDeviceList_NewAddedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all new added device from Fritz!Box'],
 			[c.idDeviceList_RemovedDevices_JSON, 'state', c.idDeviceList_RemovedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all removed devices from Fritz!Box network list'],
+			[c.idDeviceList_DailyChanges, 'state', c.idDeviceList_DailyChanges, 'string', 'info', '[]', true, false, 'JSON table, added, changed and remove devices on each day'],
+			[c.idDeviceList_DailyChanges_count, 'state', c.idDeviceList_DailyChanges_count, 'number', 'info', 0, true, true, 'item count in daily changes table'],
+			[c.idDeviceList_DailyChanges_maxCount, 'state', c.idDeviceList_DailyChanges_maxCount, 'number', 'info', 100, true, true, 'max item count in daily changes table'],
 			[c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'ip address has changed'],
 			[c.idDeviceList_OwnerChanged, 'state', c.idDeviceList_OwnerChanged, 'boolean', 'info', false, true, false, 'owner name has changed'],
 			[c.idDeviceList_WarnChanged, 'state', c.idDeviceList_WarnChanged, 'boolean', 'info', false, true, false, 'warn state has changed'],
@@ -216,13 +219,19 @@ export async function createInstanceRootObjects(that: any): Promise<void> {
 } // createInstanceRootObjects()
 
 
+/*
+	aktualisiert die device list für die Konfigurationsansicht
+
+	aCfgDevicesList - aktuelle config-deviceList
+	aAllDevices		- aktuelle List von der Fritz!Box
+*/
 //export async function updateDevices(that: any, aCfgDevicesList: JSON[], aAllActiveDevices: JSON[]) {
 export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAllDevices: JSON[]) {
 	const fctNameId: string = 'updateDevices';
 	that.log.debug(fctNameId + ' started');
 	that.log.debug(fctNameId + ', aAllActiveDevices: ' + JSON.stringify(aAllDevices));
 
-	/* !P! 
+	/*!P!#4
 	Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
 	nach Durchlauf alle DPs in Liste löschen
 	*/
@@ -232,7 +241,7 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 	let bDataChangedWatch: boolean = false;
 
 	let aCfgDevicesListOld: any = null;
-	if (that.config.devicesListOld) aCfgDevicesListOld = JSON.parse(JSON.stringify(that.config.devicesListOld));
+	if (that.config.devicesListOld) aCfgDevicesListOld = JSON.parse(JSON.stringify(that.config.devicesListOld));			// list from last confiuration on admin site
 	//!D!that.log.debug(fctNameId + ', aCfgDevicesListOld: ' + JSON.stringify(aCfgDevicesListOld));
 
 	if (!aCfgDevicesListOld) {
@@ -245,14 +254,14 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 		// {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
 
 		let oDeviceData: any = {};
-		const oCfgDeviceOld: c.IDevice = aCfgDevicesListOld.find(function (item: any) { return item.macaddress === oCfgDevice.macaddress;});
+		const oCfgDeviceOld: c.IDevice = aCfgDevicesListOld.find(function (item: any) { return ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress));});
 		
 		that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
 		
 		if (oCfgDevice.macaddress == '') {
 			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.IPAddress === oCfgDevice.ipaddress;});
 
-			//!P! hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
+			//!P!#3 hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
 		} else {
 			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.MACAddress === oCfgDevice.macaddress;});
 		}
@@ -297,7 +306,7 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 			}
 
 			if (oCfgDeviceOld) {
-				if (oCfgDeviceOld.devicename != oCfgDevice.devicename) {
+				if (oCfgDeviceOld.devicename != oCfgDevice.devicename) {		// device name has changed (bases on MAC / IP) --> remove old data
 					// check device exist
 					await that.getObjectAsync(c.dppDevices + oCfgDeviceOld.devicename)
 					.then( async (oDevice: any) => {
@@ -374,7 +383,7 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 	try {
 		let idState: string = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceActive;
 		let idStateValue: any = (((oDeviceData) && (oDeviceData.Active) &&  oDeviceData.Active == 'true') ? true : false);
-		const dtCcurrent: number = new Date().getTime();
+		const dtCcurrent: number = (new Date()).getTime();
 		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue + '"; oDeviceData: ' + JSON.stringify(oDeviceData));
 
 		let bValueChanged: boolean = await setStateAsyncEx(that, idState, idStateValue, {
@@ -387,7 +396,6 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 			desc: oCfgDevice.devicename + '.' + c.idnDeviceActive,
 		}, false, 200);		// set value with delay
 		if (bValueChanged) that.log.warn(fctNameId + ', id "' + idState + '"; set value: "' + idStateValue + '"');
-
 
 		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 		await setStateAsyncEx(that, idState, 0, {
@@ -422,7 +430,52 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 
 				that.setStateAsync(idState, dtCcurrent);
 			}
-			that.log.warn(fctNameId + ', idState "' + idState + '"; set value dtCcurrent: "' + dtCcurrent + '" (' + that.formatDate(dtCcurrent, 'YYYY.MM.DD SS:mm:ss'));
+			that.log.debug(fctNameId + ', idState "' + idState + '"; set value dtCcurrent while state changed: "' + dtCcurrent + '" (' + that.formatDate(dtCcurrent, 'YYYY.MM.DD SS:mm:ss'));
+		} else {
+			// wenn der Wert sich nicht geändert hat, muss idnDeviceLastActive | idnDeviceLastInactive > idnDeviceLastInactive | idnDeviceLastActive
+			// wenn nicht, dann gab es eine "Überwachungspause", d. h., diese Werte sollten trotzdem aktualisiert werden
+			await that.getStateAsync(c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive)
+			.then(async (oStateLA: any) => {
+				that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive + '):' + JSON.stringify(oStateLA) + '<<<');
+		
+				if (oStateLA) {
+					await that.getStateAsync(c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive)
+					.then((oStateLI: any) => {
+						that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive + '):' + JSON.stringify(oStateLI) + '<<<');
+				
+						if (oStateLI) {
+							that.log.debug(fctNameId + ', check consistent date active/inactive: ' + oStateLA.val + ' / ' + oStateLI.val);
+
+							if(idStateValue) {
+								// true --> idnDeviceLastActive > idnDeviceLastInactive
+								bValueChanged = (oStateLA.val < oStateLI.val);		// true, if inconsistent value
+							} else {
+								bValueChanged = (oStateLI.val < oStateLA.val);		// true, if inconsistent value
+							}
+
+							if (bValueChanged) {
+								// date to old, update
+								if(idStateValue) {
+									idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+					
+									that.setStateAsync(idState, dtCcurrent);
+								} else {
+									idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+					
+									that.setStateAsync(idState, dtCcurrent);
+								}
+								that.log.debug(fctNameId + ', idState "' + idState + '"; set value dtCcurrent while date active/inactive inconsistent: "' + dtCcurrent + '" (' + that.formatDate(dtCcurrent, 'YYYY.MM.DD SS:mm:ss'));
+							}
+					
+					
+						} else {
+							that.log.warn(fctNameId + ', getStateAsyncEx: object not found!');
+						}
+					});
+						} else {
+					that.log.warn(fctNameId + ', getStateAsyncEx: object not found!');
+				}
+			});
 		}
 
 		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceName;
@@ -707,6 +760,16 @@ try {
 	that.log.debug(fctNameId + ', delete device "' + idState + '"');
 	that.delObjectAsync(idState);
 
+	// remove from adapter config list
+	
+	const nIdxDL: number = that.config.devicesList.findIndex((item: any) => ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress)));
+	that.log.silly(fctNameId + ', maChangedDevices.findIndex: ' + nIdxDL);
+
+	if (nIdxDL >= 0) {
+		that.config.devicesList.splice(nIdxDL, 1);
+	} else {
+		that.log.error(fctNameId + ', item in config.devicesList not found! Parameter error?');
+	}
 }  catch(err) {
 	that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
 }

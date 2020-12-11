@@ -259,6 +259,13 @@
 
             function save(callback) {
                 callback(getSettings());
+			}
+			
+			//!P! wird wohl nicht rausgereicht
+			//!P! für save & close müsste bei save() ein Merker gesetzt werden, dass dass ausgeführt wurde bzw. dann würde sendTo von save zu close wandern
+            function close(callback) {
+				//sendTo(adapter + '.' + instance, 'startUpdateDevicesStatus', {});
+				console.log('close is called'); 
             }
 		</script>
 	</head>
@@ -318,6 +325,10 @@
 							<label for warningDestination class="translate">Select warning destination on change IP address</label>
 							<span class="tooltiptext translate">Here you can select an distination for warnings on changed IP.</span>
 						</div>
+                        <div class="input-field col s3 m6 l3">
+                            <input id="ignoreSpeed" type="checkbox" class="value filled-in" />
+                            <span class="translate" for="ignoreSpeed">ignore speed in daily changes list</span>
+                        </div>
 					</div>
 					<!-- End of row -->
 				</div>

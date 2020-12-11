@@ -113,52 +113,8 @@ export class Fb {
 		}
 	}
 
-	async chkServicesX(that: any): Promise<boolean> {
-		that.log.debug('chkServicesX started');
 
-		await this.wait(3000);
-
-		await that.getStatesAsync(c.dppFB_Info_SupportedFunctions + '*')
-		.catch((err: Error) => {
-			that.log.error('chkServices, error: ' + JSON.stringify(err));
-
-//											reject('chkServices, error: ' + JSON.stringify(err));
-
-			return false;
-		})
-		.then(async (idSupportedFunctions: Record<string, ioBroker.State>) => {
-			if (!idSupportedFunctions) {
-				that.log.error('chkServices, error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
-
-//												reject('chkServices, error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
-
-				return false;
-			} else {
-				// gather states that need to be read
-				that.log.debug('chkServices, idSupportedFunctions: ' + JSON.stringify(idSupportedFunctions));
-		
-				for (let idState in idSupportedFunctions) {
-					that.log.debug('chkServices, idState: ' + JSON.stringify(idState));
-					const idnState: string = idState.substr(idState.lastIndexOf('.') + 1);
-
-					// check has properties and value
-					if (!idSupportedFunctions.hasOwnProperty(idState) || idSupportedFunctions[idState] === null) {
-						continue;
-					}
-
-					if(idSupportedFunctions[idState].val) c.supportedFunctions.push(idnState);
-				}
-				that.log.debug('chkServicesX, idSupportedFunctions: ' + JSON.stringify(idSupportedFunctions));
-			}
-		});
-
-
-		that.log.debug('chkServicesX finished');
-
-		return true;
-	}
-
-	 xmlToJSON(str: string, options: any) {
+	xmlToJSON(str: string, options: any) {
 		return new Promise((resolve, reject) => {
 		  parseString(str, options, (err: Error, jsonObj: any) => {
 			if (err) {
@@ -396,205 +352,6 @@ export class Fb {
 	} // chkServices()
 		
 
-	async chkServicesXX(that: any): Promise<boolean> {
-		try {
-			// check version ofbox has change
-			const dpoFB_version: ioBroker.State = await that.getStateAsync(c.idFritzBoxVersion);
-			const dpvFB_version: string = <string>dpoFB_version.val;
-			const sFB_URL: string = 'http://' + this.host + ':' + this.port;
-			const sChkServiceUrl: string = sFB_URL + c.TR064_DESC;
-			//!P! warum dpvFB_version == Object??
-			that.log.debug('chkServices status, sChkServiceUrl: ' + sChkServiceUrl + '; dpvFB_version: ' + JSON.stringify(dpvFB_version));		// http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
-
-			const parseStringP = util.promisify(parseString);
-
-			//!P! alle Einträge unter supportedFunctions löschen oder auf false setzen
-
-			that.log.debug('chkServices status2, sChkServiceUrl: ' + sChkServiceUrl + '; dpvFB_version: ' + JSON.stringify(dpvFB_version));		// http://192.168.200.101:49000/hostsSCPD.xml  --> TR064_HOSTS
-
-			await fetch(new fetch.Request(sChkServiceUrl, { method: "get" }))
-				.then((response: { text: () => any; }) => response.text())
-				.then((data: any) => {
-					//console.log(data)
-					//const thats = that;
-				
-					parseString(data, {
-						explicitArray: false,
-						mergeAttrs: true
-					}, async function (err: Error, result: any) {
-						if (err) {
-							that.log.error('chkServices, parseString1, error: ' + err);
-
-							return false;
-						} else {
-							//that.log.debug('chkServices, result: ' + JSON.stringify(result));
-							//that.log.debug('chkServices, typeof result.root.systemVersion: ' + typeof result.root.systemVersion);
-
-							const sFB_version = result.root.systemVersion.Display;
-							const sFB_name = result.root.device.friendlyName;
-							const sFB_modell = result.root.device.modelDescription;
-							that.log.debug('chkServices, version: ' + sFB_version + '; sFB_name: ' + sFB_name + '; sFB_modell: ' + sFB_modell);
-
-							that.setStateChangedAsync(c.idSupportedFunctions_FritzBoxVersion, sFB_version, true);
-							that.setStateChangedAsync(c.idFritzBoxName, sFB_name, true);
-
-							const dpoFB_version2: ioBroker.State = await that.getStateAsync(c.idFritzBoxVersion);
-							that.log.debug('chkServices, dpoFB_version2 before if: ' + dpoFB_version2);
-							
-						// wenn version unterschiedlich, dann neu einlesen
-							if(dpvFB_version != sFB_version) {
-								// check if the functions are supported by avm
-								let ajServices: string[] = [];
-								ajServices.push(JSON.stringify({'serviceName': c.X_AVM_DE_GetHostListPath, 'id': 'X_AVM_DE_GetHostListPath'}));
-								ajServices.push(JSON.stringify({'serviceName': c.GetSpecificHostEntry, 'id': 'GetSpecificHostEntry'}));
-								ajServices.push(JSON.stringify({'serviceName': c.X_AVM_DE_GetSpecificHostEntryByIP, 'id': 'X_AVM_DE_GetSpecificHostEntryByIP'}));
-								that.log.debug('chkServices ajServices: ' + ajServices);
-
-								const ajToCheckedServices: string[] = [];
-								ajToCheckedServices.push(JSON.stringify({'urlPath': c.TR064_HOSTS, 'serviceNames': ajServices}));
-								that.log.debug('chkServices ajToCheckedServices: ' + ajToCheckedServices);
-
-								ajServices = [];
-								ajServices.push(JSON.stringify({'serviceName': c.GetSecurityPort, 'id': 'GetSecurityPort'}));
-								that.log.debug('chkServices ajServices: ' + ajServices);
-
-								ajToCheckedServices.push(JSON.stringify({'urlPath': c.TR064_DEVINFO, 'serviceNames': ajServices}));
-								that.log.debug('chkServices ajToCheckedServices: ' + ajToCheckedServices);
-
-								// for sService in ....
-								ajToCheckedServices.forEach(async (sCheckService: string) => {
-									that.log.debug('chkServices ajToCheckedServices.foreach, sCheckService: ' + sCheckService);
-
-									const jCheckService = JSON.parse(sCheckService);
-									const sChkServiceUrl: string = sFB_URL + jCheckService.urlPath;
-									that.log.debug('chkServices ajToCheckedServices.foreach, sChkServiceUrl: ' + sChkServiceUrl);
-
-									await fetch(new fetch.Request(sChkServiceUrl, { method: "get" }))
-									.then((response: { text: () => any; }) => response.text())
-									.then((data: any) => {
-										//console.log(data)
-
-										parseStringP(data, {
-											explicitArray: false,
-											mergeAttrs: true
-										}, function (err: Error, result: any) {
-											if (err) {
-												that.log.error('chkServices, parseString2, error: ' + err);
-
-												return false;
-											} else async () => {
-												that.log.debug('chkServices, result: ' + JSON.stringify(result));
-												that.log.debug('chkServices, jCheckService.serviceNames: ' + JSON.stringify(jCheckService.serviceNames));
-
-												const jServiceNames: Array<string> = jCheckService.serviceNames;
-												that.log.debug('chkServices, jCheckService jServiceNames: ' +  JSON.stringify(jServiceNames));
-
-												jServiceNames.forEach((sServiceCfg: string) => {
-													that.log.debug('chkServices serviceNames.foreach, sServiceCfg: ' + sServiceCfg);
-									
-													const jServiceCfg = JSON.parse(sServiceCfg);
-													const found = JSON.stringify(result).search(jServiceCfg.serviceName);
-
-													if (found == -1) {
-														that.log.warn('chkServices, sService "' + jServiceCfg.serviceName + '" is not supported');
-														mFbObj.setStateAsyncEx(that, c.dppFB_Info_SupportedFunctions + jServiceCfg.id, false, {
-															name: jServiceCfg.serviceName,
-															type: 'boolean',
-															role: 'info',
-															def: false,
-															read: true,
-															write: false,
-															desc: jServiceCfg.serviceName,
-														});
-
-														return;
-													} else {
-														that.log.debug('chkServices, sService "' + jServiceCfg.serviceName + '" is supported');
-														mFbObj.setStateAsyncEx(that, c.dppFB_Info_SupportedFunctions + jServiceCfg.id, true, {
-															name: jServiceCfg.serviceName,
-															type: 'boolean',
-															role: 'info',
-															def: false,
-															read: true,
-															write: false,
-															desc: jServiceCfg.serviceName,
-														});
-														
-														c.supportedFunctions.push(jServiceCfg.id);
-
-														return;
-													}
-												});
-											}
-										});
-									});
-								});
-
-								// update version information  
-								that.setStateAsync(c.idFritzBoxVersion, sFB_version);
-
-								return true;
-							} else {
-								// read from adapter states
-
-								that.log.debug('chkServices, getStatesAsync: ' + c.dppFB_Info_SupportedFunctions + '*');
-
-								// getStatesAsync(pattern: string, options?: unknown): Promise<CallbackReturnTypeOf<GetStatesCallback>>;
-								// type GetStatesCallback = (err: string | null, states: Record<string, State>) => void;
-								await that.getStatesAsync(c.dppFB_Info_SupportedFunctions + '*')
-								.catch((err: Error) => {
-									that.log.error('chkServices, error: ' + JSON.stringify(err));
-
-									return false;
-								})
-								.then(async (idSupportedFunctions: Record<string, ioBroker.State>) => {
-									if (!idSupportedFunctions) {
-										that.log.error('chkServices, error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
-
-										return false;
-									} else {
-										// gather states that need to be read
-										that.log.debug('chkServices, idSupportedFunctions: ' + JSON.stringify(idSupportedFunctions));
-								
-										for (let idState in idSupportedFunctions) {
-											that.log.debug('chkServices, idState: ' + JSON.stringify(idState));
-											const idnState: string = idState.substr(idState.lastIndexOf('.') + 1);
-
-											// check has properties and value
-											if (!idSupportedFunctions.hasOwnProperty(idState) || idSupportedFunctions[idState] === null) {
-												continue;
-											}
-
-											if(idSupportedFunctions[idState].val) c.supportedFunctions.push(idnState);
-										}
-									}
-								});
-							}
-						}
-					});
-
-					that.log.debug('chkServices finished');
-
-					return true;
-				});
-
-				return false;
-		} catch (error) {    
-			that.log.error('chkServices, generell error: ' + JSON.stringify(error));
-
-			// FetchError: request to http://192.168.200.101:49000/tr64desc.xml failed, reason: read ECONNRESET
-			if (error && JSON.stringify(error).indexOf('reason: read ECONNRESET') >= 0) {
-				that.log.warn('chkServices, generell error: \'read ECONNRESET\' is an problem on the Fritz!Box, please reboot the box and try again.');
-			}
-
-			this.fbCommunicationError = true;
-
-			return false;
-		}
-		return false;
-	} // chkServicesXX()
-
-
 	async getSSLPort(): Promise<any>  {
 		return new Promise((resolve, reject) => {
 			async  () => {
@@ -720,6 +477,9 @@ export class Fb {
                 
 				this.that.log.debug('soapAction, request url ' + sUri + '; body: ' + sBody);
 				//this.that.log.debug('body ' + body);
+
+				//!I! https://stackoverflow.com/questions/31258136/how-to-handle-timeout-using-request-with-nodejs
+				let requestError: any;
 				request({
 					method: 'POST',
 					uri: sUri,
@@ -730,7 +490,7 @@ export class Fb {
 						'charset': 'utf-8'
 					},
 					body: sBody,
-					timeout: 180000
+					timeout: 4000
 				}, (error: Error, response: any, body: any) => {
 					that.log.debug('soapAction, response: ' + oDevice.auth.chCount + ' ' + JSON.stringify(response));
 					//!T!that.log.debug('soapAction, body response: ' + body);
@@ -829,9 +589,16 @@ export class Fb {
 						reject('soapAction ' + sAction + ' -> ' + JSON.stringify(response));
 					}
 					if (error) {
+						requestError = error;
+
 						//this.that.log.error('soapAction error: ' + error);
 						reject('soapAction ' + sAction + ' -> ' + error);
 					}
+				}).on('abort', function(){
+					setTimeout(() => { 
+						if (requestError != 'ETIMEDOUT') reject('soapAction timeout, error: ' + requestError);
+						else reject('soapAction timeout, error: REQUEST_ABORTED');
+					}, 1000)
 				});
 			});
 		} catch (e) {

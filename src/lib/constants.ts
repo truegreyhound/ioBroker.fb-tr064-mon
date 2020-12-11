@@ -58,6 +58,26 @@ export interface IDeviceList {
 	error?: Error;
 }
 
+
+export interface IChangedDevice {
+	DeviceName: string;
+	Active: boolean;
+	Active_lc: number;
+	HostName: string;
+	HostName_lc: number;
+	IPAddress: string;
+	IPAddress_lc: number;
+	MACAddress: string;
+	Interfacetype: string;
+	Guest: boolean;
+	Port: number;
+	Speed: number;
+	ts: number;
+	Count: number;
+	Action: string;
+}
+
+
 export const dppFB_Info = 'info.';
 export const dppFB_Info_SupportedFunctions = 'info.supportedFunctions.';
 export const dppDevices = 'devices.';
@@ -87,6 +107,10 @@ export const idDeviceList_RemovedDevices_JSON = dppDevices + 'deviceList_Removed
 export const idDeviceList_Warn_JSON = dppDevices + 'deviceList_warn_JSON';
 export const idDeviceList_Warn_active_JSON = dppDevices + 'deviceList_warn_active_JSON';
 export const idDeviceList_Warn_inactive_JSON = dppDevices + 'deviceList_warn_inactive_JSON';
+
+export const idDeviceList_DailyChanges = dppDevices + 'deviceList_daily_changes_JSON';
+export const idDeviceList_DailyChanges_count = dppDevices + 'deviceList_daily_changes_count';
+export const idDeviceList_DailyChanges_maxCount = dppDevices + 'deviceList_daily_changes_max_count';
 
 export const idDeviceList_IPChanged = dppDevices + 'deviceList_ip_changed';			// IP
 export const idDeviceList_OwnerChanged = dppDevices + 'deviceList_owner_changed';	// owner

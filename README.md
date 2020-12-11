@@ -47,6 +47,14 @@ to read the fritzbox data.
 ### Select warning on change IP address
 You can choose whether a message is written to the log or to the telegram when the IP address is changed.
 
+### ignoreSpeed
+ignore speed in daily changes list to detect change on an device
+
+
+### new devices or removed devices on Fritz!Box
+New or removed devices are missing or are still in the adapter device list. 
+Therefore, after changes to the network configuration of the Fritz!Box, the adapter configuration must also be called up and saved.
+
 ## Features
 
 ### Fritzbox info
@@ -189,6 +197,15 @@ JSON table, all watched devices active state
 ### deviceList_warn_active_JSON
 JSON table, all watched active devices
 
+### deviceList_daily_changes_JSON
+JSON table, with device changes aggregated for every day
+
+### deviceList_daily_changes_count
+item count in deviceList_daily_changes_JSON
+
+### deviceList_daily_changes_max_count
+max items count should in deviceList_daily_changes_JSON (should 1.5 - 3 fold of devices count)
+
 ### deviceList_warn changed
 warn state has changed
 
@@ -223,6 +240,8 @@ OS version of the Fritzbox
 
 
 ## Changelog 
+### 0.3.7 add daily device change list to monitore changes
+
 ### 0.3.6 add new and change flag in device table, so if clear which device is new or changed
 
 ### 0.3.5 removing renamed old devices, fix configuration page

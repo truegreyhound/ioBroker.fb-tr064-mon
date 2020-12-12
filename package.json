@@ -1,12 +1,12 @@
 {
-	"name": "iobroker.fb-tr-064",
-	"version": "0.3.7",
+	"name": "iobroker.fb-tr064-mon",
+	"version": "0.3.8",
 	"description": "read Fritzbox data over TR-064",
 	"author": {
 		"name": "truegreyhound",
 		"email": "truegreyhound@gmx.net"
 	},
-	"homepage": "https://github.com/truegreyhound/ioBroker.fb-tr-064",
+	"homepage": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon",
 	"license": "MIT",
 	"keywords": [
 		"ioBroker",
@@ -19,7 +19,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/truegreyhound/ioBroker.fb-tr-064"
+		"url": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon"
 	},
 	"main": "build/main.js",
 	"dependencies": {
@@ -100,7 +100,7 @@
 		"instrument": true
 	},
 	"bugs": {
-		"url": "https://github.com/truegreyhound/ioBroker.fb-tr-064/issues"
+		"url": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/issues"
 	},
 	"readmeFilename": "README.md",
 	"files": [

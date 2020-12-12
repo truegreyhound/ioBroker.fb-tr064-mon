@@ -139,7 +139,7 @@
 					oDLonstart.devicesList = settings.devicesList;
 					oDLonstart.devicesListOld = settings.devicesListOld;
 
-					// --> fragt den Status von 'system.adapter.fb-tr-064.x.alive'; dass ist der  ioBroker-Adapter-Status
+					// --> fragt den Status von 'system.adapter.fb-tr064-mon.x.alive'; dass ist der  ioBroker-Adapter-Status
 					// die Antwort vom js-controller per callback/sendTo
 					socket.emit('getState', 'system.adapter.' + adapter + '.' + instance + '.alive', function (err, state) {
 						active = state && state.val; // TRUE|FALSE
@@ -286,7 +286,7 @@
 				<div id="tab-main" class="col s12 page">
 					<div class="row">
 						<div class="col s12 m4 l2">
-							<img src="fb-tr-064.png" class="logo" />
+							<img src="fb-tr064-mon.png" class="logo" />
 						</div>
 					</div>
 					<!-- End of row -->
@@ -337,7 +337,7 @@
 				<div id="tab-devices" class="col s12 page">
 					<div class="row">
 						<div class="col s12 m8 l8">
-							<img src="fb-tr-064.png" class="logo" />
+							<img src="fb-tr064-mon.png" class="logo" />
 							<p class="translate">Here you can overwrite the network name, set an owner (used for external presence detection), enable warning while IP has changed and enable watching for an devices.</p>
 							<p class="translate">For each enabled device for watching any datapoints under devices will be created and periodical updated. The owner 'guest' is reserved for guest devices!</p>
 						</div>

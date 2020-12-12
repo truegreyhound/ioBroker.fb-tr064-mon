@@ -1,4 +1,4 @@
-"fb-tr-064.admin": {
+"fb-tr064-mon.admin": {
     "type": "meta",
     "common": {
         "name": "admin",
@@ -8,18 +8,18 @@
     "ts": 1580741787322,
     "native": {
     },
-    "_id": "fb-tr-064.admin",
+    "_id": "fb-tr064-mon.admin",
     "acl": {
         "object": 1636,
         "owner": "system.user.admin",
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064": {
-    "_id": "system.adapter.fb-tr-064",
+"system.adapter.fb-tr064-mon": {
+    "_id": "system.adapter.fb-tr064-mon",
     "type": "adapter",
     "common": {
-        "name": "fb-tr-064",
+        "name": "fb-tr064-mon",
         "version": "0.0.1",
         "news": {
             "0.0.1": {
@@ -72,10 +72,10 @@
         "license": "MIT",
         "platform": "Javascript/Node.js",
         "main": "build/main.js",
-        "icon": "fb-tr-064.png",
+        "icon": "fb-tr064-mon.png",
         "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr-064/master/admin/fb-tr-064.png",
-        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr-064/blob/master/README.md",
+        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
+        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
         "loglevel": "info",
         "mode": "daemon",
         "type": "infrastructure",
@@ -102,11 +102,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.sigKill": {
-    "_id": "system.adapter.fb-tr-064.0.sigKill",
+"system.adapter.fb-tr064-mon.0.sigKill": {
+    "_id": "system.adapter.fb-tr064-mon.0.sigKill",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 kill signal",
+        "name": "fb-tr064-mon.0 kill signal",
         "type": "number",
         "read": true,
         "write": false,
@@ -124,11 +124,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.eventLoopLag": {
-    "_id": "system.adapter.fb-tr-064.0.eventLoopLag",
+"system.adapter.fb-tr064-mon.0.eventLoopLag": {
+    "_id": "system.adapter.fb-tr064-mon.0.eventLoopLag",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 Node.js event loop lag",
+        "name": "fb-tr064-mon.0 Node.js event loop lag",
         "desc": "Node.js event loop lag in ms averaged over 15 seconds",
         "type": "number",
         "read": true,
@@ -147,11 +147,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.outputCount": {
-    "_id": "system.adapter.fb-tr-064.0.outputCount",
+"system.adapter.fb-tr064-mon.0.outputCount": {
+    "_id": "system.adapter.fb-tr064-mon.0.outputCount",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 events output counter",
+        "name": "fb-tr064-mon.0 events output counter",
         "desc": "State's outputs in 15 seconds",
         "type": "number",
         "read": true,
@@ -170,11 +170,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.inputCount": {
-    "_id": "system.adapter.fb-tr-064.0.inputCount",
+"system.adapter.fb-tr064-mon.0.inputCount": {
+    "_id": "system.adapter.fb-tr064-mon.0.inputCount",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 events input counter",
+        "name": "fb-tr064-mon.0 events input counter",
         "desc": "State's inputs in 15 seconds",
         "type": "number",
         "read": true,
@@ -193,11 +193,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.uptime": {
-    "_id": "system.adapter.fb-tr-064.0.uptime",
+"system.adapter.fb-tr064-mon.0.uptime": {
+    "_id": "system.adapter.fb-tr064-mon.0.uptime",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 uptime",
+        "name": "fb-tr064-mon.0 uptime",
         "type": "number",
         "read": true,
         "write": false,
@@ -215,11 +215,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.memRss": {
-    "_id": "system.adapter.fb-tr-064.0.memRss",
+"system.adapter.fb-tr064-mon.0.memRss": {
+    "_id": "system.adapter.fb-tr064-mon.0.memRss",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 resident Set Size",
+        "name": "fb-tr064-mon.0 resident Set Size",
         "desc": "Resident set size",
         "read": true,
         "write": false,
@@ -238,11 +238,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.memHeapTotal": {
-    "_id": "system.adapter.fb-tr-064.0.memHeapTotal",
+"system.adapter.fb-tr064-mon.0.memHeapTotal": {
+    "_id": "system.adapter.fb-tr064-mon.0.memHeapTotal",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 total Size of the Heap",
+        "name": "fb-tr064-mon.0 total Size of the Heap",
         "read": true,
         "write": false,
         "type": "number",
@@ -260,11 +260,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.memHeapUsed": {
-    "_id": "system.adapter.fb-tr-064.0.memHeapUsed",
+"system.adapter.fb-tr064-mon.0.memHeapUsed": {
+    "_id": "system.adapter.fb-tr064-mon.0.memHeapUsed",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 heap actually Used",
+        "name": "fb-tr064-mon.0 heap actually Used",
         "type": "number",
         "read": true,
         "write": false,
@@ -282,11 +282,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.cputime": {
-    "_id": "system.adapter.fb-tr-064.0.cputime",
+"system.adapter.fb-tr064-mon.0.cputime": {
+    "_id": "system.adapter.fb-tr064-mon.0.cputime",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0.cputime",
+        "name": "fb-tr064-mon.0.cputime",
         "type": "number",
         "read": true,
         "write": false,
@@ -304,11 +304,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.cpu": {
-    "_id": "system.adapter.fb-tr-064.0.cpu",
+"system.adapter.fb-tr064-mon.0.cpu": {
+    "_id": "system.adapter.fb-tr064-mon.0.cpu",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0.cpu",
+        "name": "fb-tr064-mon.0.cpu",
         "type": "number",
         "read": true,
         "write": false,
@@ -326,11 +326,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.compactMode": {
-    "_id": "system.adapter.fb-tr-064.0.compactMode",
+"system.adapter.fb-tr064-mon.0.compactMode": {
+    "_id": "system.adapter.fb-tr064-mon.0.compactMode",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0.compactMode",
+        "name": "fb-tr064-mon.0.compactMode",
         "type": "boolean",
         "read": true,
         "write": false,
@@ -347,11 +347,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.connected": {
-    "_id": "system.adapter.fb-tr-064.0.connected",
+"system.adapter.fb-tr064-mon.0.connected": {
+    "_id": "system.adapter.fb-tr064-mon.0.connected",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 is connected",
+        "name": "fb-tr064-mon.0 is connected",
         "type": "boolean",
         "read": true,
         "write": false,
@@ -368,11 +368,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0.alive": {
-    "_id": "system.adapter.fb-tr-064.0.alive",
+"system.adapter.fb-tr064-mon.0.alive": {
+    "_id": "system.adapter.fb-tr064-mon.0.alive",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 alive",
+        "name": "fb-tr064-mon.0 alive",
         "type": "boolean",
         "read": true,
         "write": true,
@@ -389,11 +389,11 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"system.adapter.fb-tr-064.0": {
-    "_id": "system.adapter.fb-tr-064.0",
+"system.adapter.fb-tr064-mon.0": {
+    "_id": "system.adapter.fb-tr064-mon.0",
     "type": "instance",
     "common": {
-        "name": "fb-tr-064",
+        "name": "fb-tr064-mon",
         "version": "0.0.1",
         "news": {
             "0.0.1": {
@@ -446,10 +446,10 @@
         "license": "MIT",
         "platform": "Javascript/Node.js",
         "main": "build/main.js",
-        "icon": "fb-tr-064.png",
+        "icon": "fb-tr064-mon.png",
         "enabled": false,
-        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr-064/master/admin/fb-tr-064.png",
-        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr-064/blob/master/README.md",
+        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
+        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
         "loglevel": "debug",
         "mode": "daemon",
         "type": "infrastructure",
@@ -484,11 +484,11 @@
     },
     "user": "system.user.admin"
 },
-"system.adapter.fb-tr-064.0.logLevel": {
-    "_id": "system.adapter.fb-tr-064.0.logLevel",
+"system.adapter.fb-tr064-mon.0.logLevel": {
+    "_id": "system.adapter.fb-tr064-mon.0.logLevel",
     "type": "state",
     "common": {
-        "name": "fb-tr-064.0 loglevel",
+        "name": "fb-tr064-mon.0 loglevel",
         "type": "string",
         "read": true,
         "write": true,
@@ -504,7 +504,7 @@
         "ownerGroup": "system.group.administrator"
     }
 },
-"fb-tr-064.0.testVariable": {
+"fb-tr064-mon.0.testVariable": {
     "type": "state",
     "common": {
         "name": "testVariable",
@@ -515,10 +515,10 @@
     },
     "native": {
     },
-    "from": "system.adapter.fb-tr-064.0",
+    "from": "system.adapter.fb-tr064-mon.0",
     "user": "system.user.admin",
     "ts": 1580890817075,
-    "_id": "fb-tr-064.0.testVariable",
+    "_id": "fb-tr064-mon.0.testVariable",
     "acl": {
         "object": 1636,
         "state": 1636,

@@ -1,12 +1,12 @@
-# ioBroker.fb-tr-064
+# ioBroker.fb-tr064-mon
 monitor devices on the Fritz!Box for ioBroker
 =======
 <h1>
-    <img src="admin/fb-tr-064.png" width="64"/>
-    ioBroker.fb-tr-064
+    <img src="admin/fb-tr064-mon.png" width="64"/>
+    ioBroker.fb-tr064-mon
 </h1>
 
-## fb-tr-064 adapter for ioBroker
+## fb-tr064-mon adapter for ioBroker
 
 The adapter reads the network device list from the Fritz! Box and allows
 to change the device name, the assignment to an owner,
@@ -58,11 +58,11 @@ Therefore, after changes to the network configuration of the Fritz!Box, the adap
 ## Features
 
 ### Fritzbox info
-The collected information is written as data points under fb-tr-064.n.info
+The collected information is written as data points under fb-tr064-mon.n.info
 
 ### Fritzbox support checks
 The function checks the availability and version of used fritzbox features. 
-The collected information is written as data points under fb-tr-064.n.info.supportedFunctions
+The collected information is written as data points under fb-tr064-mon.n.info.supportedFunctions
 
 ## Configuration dialog device settings
 The list of devices is only displayed if the adapter was able to start successfully after the main configuration.
@@ -89,7 +89,7 @@ If activated and the device goes inactive, a warning is sent to the configured r
 ## Device Objects
 The following data points are maintained for each device
 
-fb-tr-064.n.devices.<device name>.<state>
+fb-tr064-mon.n.devices.<device name>.<state>
 
 ### Device Object: IP
 the current ip address
@@ -144,7 +144,7 @@ the value of the setting on the configuration page for watch
 ## Generell Objects
 The following data points are cummulated informations
 
-fb-tr-064.n.devices.<state>
+fb-tr064-mon.n.devices.<state>
 
 ### countDevicesActive
 Number of active devices
@@ -218,7 +218,7 @@ watch state has changed
 ## Fritzbox info Objects
 The following data points are cummulated informations
 
-fb-tr-064.n.info.<state>
+fb-tr064-mon.n.info.<state>
 
 ### connection
 the adapter is connected to the Fritzbox or not
@@ -240,6 +240,7 @@ OS version of the Fritzbox
 
 
 ## Changelog 
+### 0.3.8 renamed from fb-tr-064 to fb-tr064-mon
 ### 0.3.7 add daily device change list to monitore changes
 
 ### 0.3.6 add new and change flag in device table, so if clear which device is new or changed

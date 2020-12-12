@@ -17,7 +17,7 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 		})
 		.then(async (err: Error, obj: any) => {
 			that.log.debug('setStateAsyncEx, setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
-			// obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr-064.0.devices.iFranks.IP"} --> created
+			// obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP"} --> created
 
 			if (((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
 				// state already exist -->  no value should be set || state new created --> set value
@@ -38,7 +38,7 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 					await that.setStateChangedAsync(_id, _value, true)
 					.then((obj:any) => {
 						that.log.debug('setStateAsyncEx, setStateChangedAsync, obj:' + JSON.stringify(obj) + '<<<');
-						// obj:{"id":"fb-tr-064.0.devices.iFranks.IP","notChanged":true}
+						// obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP","notChanged":true}
 						
 						bValueChanged = !obj.notChanged;
 					});

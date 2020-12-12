@@ -24,7 +24,7 @@ Das mit new und change muss noch mal debuggt werden, kommt auf CfgSeite nicht an
 In den JSON-Listen auch einen Zeitstempel, wann sich der Eintrag geändert hat
 
 
-2020-12-04 11:42:51.578  - [34mdebug[39m: fb-tr-064.0 (6804) soapAction, request url https://192.168.200.101:49443/upnp/control/hosts; body: <?xml version="1.0" encoding="utf-8"?><s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ><s:Header><h:ClientAuth xmlns:h="http://soap-authentication.org/digest/2001/10/"s:mustUnderstand="1"><Nonce>99653D01ADA9D644</Nonce><Auth>2ca5df78159456923b285791c7159d2a</Auth><UserID>TR064</UserID><Realm>F!Box SOAP-Auth</Realm></h:ClientAuth></s:Header><s:Body><u:X_AVM-DE_GetHostListPath xmlns:u="urn:dslforum-org:service:Hosts:1"></u:X_AVM-DE_GetHostListPath></s:Body></s:Envelope>
+2020-12-04 11:42:51.578  - [34mdebug[39m: fb-tr064-mon.0 (6804) soapAction, request url https://192.168.200.101:49443/upnp/control/hosts; body: <?xml version="1.0" encoding="utf-8"?><s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ><s:Header><h:ClientAuth xmlns:h="http://soap-authentication.org/digest/2001/10/"s:mustUnderstand="1"><Nonce>99653D01ADA9D644</Nonce><Auth>2ca5df78159456923b285791c7159d2a</Auth><UserID>TR064</UserID><Realm>F!Box SOAP-Auth</Realm></h:ClientAuth></s:Header><s:Body><u:X_AVM-DE_GetHostListPath xmlns:u="urn:dslforum-org:service:Hosts:1"></u:X_AVM-DE_GetHostListPath></s:Body></s:Envelope>
 >> timeout --> warn in log, Timeoutzähler, nach n Fehler ErrorMsg in Log und Adapter disable oder ?
 
 
@@ -376,7 +376,7 @@ async function createDeviceStatusLists(that, aDevices) {
 } // createDeviceStatusLists()
 class FbTr064 extends utils.Adapter {
     constructor(options = {}) {
-        super(Object.assign(Object.assign({}, options), { name: 'fb-tr-064' }));
+        super(Object.assign(Object.assign({}, options), { name: 'fb-tr064-mon' }));
         adapter = this;
         this.on('ready', this.onReady.bind(this));
         //this.on('objectChange', this.onObjectChange.bind(this));
@@ -399,7 +399,7 @@ class FbTr064 extends utils.Adapter {
             */
             // <<<<<<<<<<<<<<<<<<<<<<<<<<< >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             //!P!			this.log.info('onReady start ' + adapter.name + '; ip-address: ' + this.config.fbIP + '; polling interval: ' + this.config.fbQueryInterval + ' sec.');
-            this.log.info('onReady start -++*** fb-tr-064; ip-address: ' + this.config.fbIP + '; polling interval: ' + this.config.fbQueryInterval + ' sec. ***++-');
+            this.log.info('onReady start -++*** fb-tr064-mon; ip-address: ' + this.config.fbIP + '; polling interval: ' + this.config.fbQueryInterval + ' sec. ***++-');
             if (this.config.fbUID === '' || this.config.fbPassword === '' || this.config.fbIP === '') {
                 this.log.error('onReady, Please set the connection params (ip, user, password, etc.) in the adapter options before starting the adapter!');
                 this.setState('info.connection', { val: false, ack: true });

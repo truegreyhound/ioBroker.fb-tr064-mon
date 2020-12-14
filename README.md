@@ -240,6 +240,8 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.0 fix type conversations
+
 ### 0.3.9 json list generation redesigned
 
 ### 0.3.8 renamed from fb-tr-064 to fb-tr064-mon

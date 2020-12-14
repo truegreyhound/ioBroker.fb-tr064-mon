@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "fb-tr064-mon",
-        "version": "0.3.9",
+        "version": "0.4.0",
         "news": {
+            "0.4.0": {
+                "en": "fix type conversations"
+            },
             "0.3.9": {
                 "en": "json list generation redesigned"
             },

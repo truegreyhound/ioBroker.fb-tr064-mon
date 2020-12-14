@@ -21,7 +21,9 @@ async function setStateAsyncEx(that, _id, _value, _common, _setValueOnlyStateCre
             .then(async (err, obj) => {
             that.log.debug('setStateAsyncEx, setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
             // obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP"} --> created
-            if (((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
+            if (err)
+                that.log.error('setStateAsyncEx error: ' + JSON.stringify(err));
+            if (!(err) && ((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
                 // state already exist -->  no value should be set || state new created --> set value
                 if (_setValueDelay > 0) {
                     await that.getStateAsync(_id)
@@ -152,7 +154,6 @@ async function createInstanceRootObjects(that) {
             [c.idFritzBoxName, 'state', c.idFritzBoxName, 'string', 'info', '', true, false, 'Fritz!Box name'],
             [c.idFritzBoxIP, 'state', c.idFritzBoxIP, 'string', 'info', '', true, false, 'Fritz!Box ip address'],
             [c.idFritzBoxMAC, 'state', c.idFritzBoxMAC, 'string', 'info', '', true, false, 'Fritz!Box mac address'],
-            [c.idDeviceListAll_JSON, 'state', c.idDeviceListAll_JSON, 'string', 'info', '[]', true, false, 'JSON table, all devices'],
             [c.idDeviceListInactive_JSON, 'state', c.idDeviceListInactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all inactive devices'],
             [c.idDeviceListActive_JSON, 'state', c.idDeviceListActive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active devices'],
             [c.idDeviceListActiveLAN_JSON, 'state', c.idDeviceListActiveLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active LAN devices'],
@@ -163,9 +164,13 @@ async function createInstanceRootObjects(that) {
             [c.idDeviceList_Warn_inactive_JSON, 'state', c.idDeviceList_Warn_inactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched inactive devices'],
             [c.idDeviceList_NewAddedDevices_JSON, 'state', c.idDeviceList_NewAddedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all new added device from Fritz!Box'],
             [c.idDeviceList_RemovedDevices_JSON, 'state', c.idDeviceList_RemovedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all removed devices from Fritz!Box network list'],
-            [c.idDeviceList_DailyChanges, 'state', c.idDeviceList_DailyChanges, 'string', 'info', '[]', true, false, 'JSON table, added, changed and remove devices on each day'],
+            [c.idDeviceList_DailyChanges_JSON, 'state', c.idDeviceList_DailyChanges_JSON, 'string', 'info', '[]', true, false, 'JSON table, added, changed and remove devices on each day'],
             [c.idDeviceList_DailyChanges_count, 'state', c.idDeviceList_DailyChanges_count, 'number', 'info', 0, true, true, 'item count in daily changes table'],
             [c.idDeviceList_DailyChanges_maxCount, 'state', c.idDeviceList_DailyChanges_maxCount, 'number', 'info', 100, true, true, 'max item count in daily changes table'],
+            [c.idDeviceList_CachedDevices_JSON, 'state', c.idDeviceList_CachedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, with all devices and configuration datam internal cache'],
+            [c.idDeviceList_View_JSON, 'state', c.idDeviceList_View_JSON, 'string', 'info', '[]', true, false, 'JSON table for viewing in VIS e.g.'],
+            [c.idDeviceList_View_JSON_Count, 'state', c.idDeviceList_View_JSON_Count, 'number', 'info', 0, true, false, 'Item count of viewing JSON table'],
+            [c.idDeviceList_View_Name, 'state', c.idDeviceList_View_Name, 'string', 'info', 'dailyChanges', true, false, 'Input selector to toggle JSON table for viewing'],
             [c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'ip address has changed'],
             [c.idDeviceList_OwnerChanged, 'state', c.idDeviceList_OwnerChanged, 'boolean', 'info', false, true, false, 'owner name has changed'],
             [c.idDeviceList_WarnChanged, 'state', c.idDeviceList_WarnChanged, 'boolean', 'info', false, true, false, 'warn state has changed'],
@@ -225,7 +230,7 @@ async function updateDevices(that, aCfgDevicesList, aAllDevices) {
     aCfgDevicesList.map(async (oCfgDevice) => {
         that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
         // {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
-        let oDeviceData = {};
+        let oDeviceData;
         const oCfgDeviceOld = aCfgDevicesListOld.find(function (item) { return ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress)); });
         that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
         if (oCfgDevice.macaddress == '') {

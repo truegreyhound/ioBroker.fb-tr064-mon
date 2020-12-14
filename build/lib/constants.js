@@ -16,6 +16,14 @@ exports.GetSecurityPort = 'GetSecurityPort';
 exports.X_AVM_DE_GetHostListPath = 'X_AVM-DE_GetHostListPath';
 exports.X_AVM_DE_GetSpecificHostEntryByIP = 'X_AVM-DE_GetSpecificHostEntryByIP';
 exports.supportedFunctions = [];
+var CachedDevice_State;
+(function (CachedDevice_State) {
+    CachedDevice_State["new"] = "new";
+    CachedDevice_State["non"] = "non";
+    CachedDevice_State["removed"] = "removed";
+    CachedDevice_State["changed"] = "changed";
+})(CachedDevice_State = exports.CachedDevice_State || (exports.CachedDevice_State = {}));
+;
 exports.dppFB_Info = 'info.';
 exports.dppFB_Info_SupportedFunctions = 'info.supportedFunctions.';
 exports.dppDevices = 'devices.';
@@ -29,9 +37,8 @@ exports.idCountDevicesActive = exports.dppDevices + 'countDevicesActive';
 exports.idCountDevicesActiveLAN = exports.dppDevices + 'countDevicesActiveLAN';
 exports.idCountDevicesActiveWLAN = exports.dppDevices + 'countDevicesActiveWLAN';
 exports.idCountDevicesActiveGuests = exports.dppDevices + 'countDevicesActiveGuests';
-exports.idDeviceListAll_JSON = exports.dppDevices + 'deviceListAll_JSON';
-exports.idDeviceListInactive_JSON = exports.dppDevices + 'deviceListInactive_JSON';
 exports.idDeviceListActive_JSON = exports.dppDevices + 'deviceListActive_JSON';
+exports.idDeviceListInactive_JSON = exports.dppDevices + 'deviceListInactive_JSON';
 exports.idDeviceListActiveLAN_JSON = exports.dppDevices + 'deviceListActiveLAN_JSON';
 exports.idDeviceListActiveWLAN_JSON = exports.dppDevices + 'deviceListActiveWLAN_JSON';
 exports.idDeviceListActiveGuests_JSON = exports.dppDevices + 'deviceListActiveGuests_JSON';
@@ -40,9 +47,13 @@ exports.idDeviceList_RemovedDevices_JSON = exports.dppDevices + 'deviceList_Remo
 exports.idDeviceList_Warn_JSON = exports.dppDevices + 'deviceList_warn_JSON';
 exports.idDeviceList_Warn_active_JSON = exports.dppDevices + 'deviceList_warn_active_JSON';
 exports.idDeviceList_Warn_inactive_JSON = exports.dppDevices + 'deviceList_warn_inactive_JSON';
-exports.idDeviceList_DailyChanges = exports.dppDevices + 'deviceList_daily_changes_JSON';
+exports.idDeviceList_DailyChanges_JSON = exports.dppDevices + 'deviceList_daily_changes_JSON';
 exports.idDeviceList_DailyChanges_count = exports.dppDevices + 'deviceList_daily_changes_count';
 exports.idDeviceList_DailyChanges_maxCount = exports.dppDevices + 'deviceList_daily_changes_max_count';
+exports.idDeviceList_CachedDevices_JSON = exports.dppDevices + 'deviceList_cached_devices_JSON';
+exports.idDeviceList_View_JSON = exports.dppDevices + 'deviceList_view_JSON';
+exports.idDeviceList_View_JSON_Count = exports.dppDevices + 'deviceList_view_JSON_count';
+exports.idDeviceList_View_Name = exports.dppDevices + 'deviceList_view_name';
 exports.idDeviceList_IPChanged = exports.dppDevices + 'deviceList_ip_changed'; // IP
 exports.idDeviceList_OwnerChanged = exports.dppDevices + 'deviceList_owner_changed'; // owner
 exports.idDeviceList_WarnChanged = exports.dppDevices + 'deviceList_warn_changed'; // warn

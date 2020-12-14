@@ -1,12 +1,6 @@
 In der objects.json werden unter anderem (beim Start!?) die Properties aus der main.js zum Zeitpunkt der Installation gespeichert!
 
-den erzeugten DP für devices dann per Admin eine Function zuordnen (presencedetection)
-
-"option1": true,
-"option2": "42"
-
-testVariable
-
+den erzeugten DP für devices dann per Admin eine Function zuordnen (presence_detection)
 
 
 declare global {

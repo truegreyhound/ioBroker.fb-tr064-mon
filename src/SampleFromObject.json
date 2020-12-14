@@ -1,528 +1,505 @@
-"fb-tr064-mon.admin": {
-    "type": "meta",
-    "common": {
-        "name": "admin",
-        "type": "admin"
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787322,
-    "native": {
-    },
-    "_id": "fb-tr064-mon.admin",
-    "acl": {
-        "object": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon": {
-    "_id": "system.adapter.fb-tr064-mon",
-    "type": "adapter",
-    "common": {
-        "name": "fb-tr064-mon",
-        "version": "0.0.1",
-        "news": {
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
-            }
+{
+    "fb-tr064-mon.admin": {
+        "type": "meta",
+        "common": {
+            "name": "admin",
+            "type": "admin"
         },
-        "title": "Fritzbox TR-064",
-        "titleLang": {
-            "en": "Fritzbox TR-064",
-            "de": "Fritzbox TR-064",
-            "ru": "Fritzbox TR-064",
-            "pt": "Fritzbox TR-064",
-            "nl": "Fritzbox TR-064",
-            "fr": "Fritzbox TR-064",
-            "it": "Fritzbox TR-064",
-            "es": "Fritzbox TR-064",
-            "pl": "Fritzbox TR-064",
-            "zh-cn": "Fritzbox TR-064"
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787322,
+        "native": {},
+        "_id": "fb-tr064-mon.admin",
+        "acl": {
+            "object": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon": {
+        "_id": "system.adapter.fb-tr064-mon",
+        "type": "adapter",
+        "common": {
+            "name": "fb-tr064-mon",
+            "version": "0.0.1",
+            "news": {
+                "0.0.1": {
+                    "en": "initial release",
+                    "de": "Erstveröffentlichung",
+                    "ru": "Начальная версия",
+                    "pt": "lançamento inicial",
+                    "nl": "Eerste uitgave",
+                    "fr": "Première version",
+                    "it": "Versione iniziale",
+                    "es": "Versión inicial",
+                    "pl": "Pierwsze wydanie",
+                    "zh-cn": "首次出版"
+                }
+            },
+            "title": "Fritzbox TR-064",
+            "titleLang": {
+                "en": "Fritzbox TR-064",
+                "de": "Fritzbox TR-064"
+            },
+            "desc": {
+                "en": "read Fritzbox data over TR-064",
+                "de": "Fritzbox Netzwerkdaten über TR-064 auslesen"
+            },
+            "authors": [
+                "truegreyhound <truegreyhound@gmx.net>"
+            ],
+            "keywords": [
+                "fritzbox",
+                "tr-064",
+                "network",
+                "callmonitor"
+            ],
+            "license": "MIT",
+            "platform": "Javascript/Node.js",
+            "main": "build/main.js",
+            "icon": "fb-tr064-mon.png",
+            "enabled": true,
+            "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
+            "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
+            "loglevel": "info",
+            "mode": "daemon",
+            "type": "infrastructure",
+            "compact": true,
+            "connectionType": "local",
+            "dataSource": "poll",
+            "materialize": true,
+            "dependencies": [
+                {
+                    "js-controller": ">=1.4.2"
+                }
+            ],
+            "installedVersion": "0.0.1"
         },
-        "desc": {
-            "en": "read Fritzbox data over TR-064",
-            "de": "Fritzbox Daten über TR-064 auslesen",
-            "ru": "читать данные Fritzbox через TR-064",
-            "pt": "ler dados Fritzbox sobre TR-064",
-            "nl": "Fritzbox-gegevens lezen via TR-064",
-            "fr": "lire les données Fritzbox sur TR-064",
-            "it": "leggi i dati di Fritzbox su TR-064",
-            "es": "leer datos de Fritzbox sobre TR-064",
-            "pl": "odczyt danych Fritzbox przez TR-064",
-            "zh-cn": "通过TR-064读取Fritzbox数据"
+        "native": {
+            "option1": true,
+            "option2": "42"
         },
-        "authors": [
-            "truegreyhound <truegreyhound@gmx.net>"
-        ],
-        "keywords": [
-            "fritzbox",
-            "tr-064",
-            "network",
-            "callmonitor"
-        ],
-        "license": "MIT",
-        "platform": "Javascript/Node.js",
-        "main": "build/main.js",
-        "icon": "fb-tr064-mon.png",
-        "enabled": true,
-        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
-        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "infrastructure",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "poll",
-        "materialize": true,
-        "dependencies": [
-            {
-                "js-controller": ">=1.4.2"
-            }
-        ],
-        "installedVersion": "0.0.1"
+        "from": "system.host.NB04.cli",
+        "ts": 1580929459665,
+        "acl": {
+            "object": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "native": {
-        "option1": true,
-        "option2": "42"
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580929459665,
-    "acl": {
-        "object": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.sigKill": {
-    "_id": "system.adapter.fb-tr064-mon.0.sigKill",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 kill signal",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "desc": "Process id that must survive. All other IDs must terminate itself",
-        "role": "state"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787751,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.eventLoopLag": {
-    "_id": "system.adapter.fb-tr064-mon.0.eventLoopLag",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 Node.js event loop lag",
-        "desc": "Node.js event loop lag in ms averaged over 15 seconds",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "state",
-        "unit": "ms"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787781,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.outputCount": {
-    "_id": "system.adapter.fb-tr064-mon.0.outputCount",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 events output counter",
-        "desc": "State's outputs in 15 seconds",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "state",
-        "unit": "events/15 seconds"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787810,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.inputCount": {
-    "_id": "system.adapter.fb-tr064-mon.0.inputCount",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 events input counter",
-        "desc": "State's inputs in 15 seconds",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "state",
-        "unit": "events/15 seconds"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787840,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.uptime": {
-    "_id": "system.adapter.fb-tr064-mon.0.uptime",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 uptime",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "indicator.state",
-        "unit": "seconds"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787870,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.memRss": {
-    "_id": "system.adapter.fb-tr064-mon.0.memRss",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 resident Set Size",
-        "desc": "Resident set size",
-        "read": true,
-        "write": false,
-        "type": "number",
-        "role": "indicator.state",
-        "unit": "MB"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787899,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.memHeapTotal": {
-    "_id": "system.adapter.fb-tr064-mon.0.memHeapTotal",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 total Size of the Heap",
-        "read": true,
-        "write": false,
-        "type": "number",
-        "role": "indicator.state",
-        "unit": "MB"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787930,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.memHeapUsed": {
-    "_id": "system.adapter.fb-tr064-mon.0.memHeapUsed",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 heap actually Used",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "indicator.state",
-        "unit": "MB"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787962,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.cputime": {
-    "_id": "system.adapter.fb-tr064-mon.0.cputime",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0.cputime",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "indicator.state",
-        "unit": "seconds"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741787992,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.cpu": {
-    "_id": "system.adapter.fb-tr064-mon.0.cpu",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0.cpu",
-        "type": "number",
-        "read": true,
-        "write": false,
-        "role": "indicator.state",
-        "unit": "% of one core"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741788022,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.compactMode": {
-    "_id": "system.adapter.fb-tr064-mon.0.compactMode",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0.compactMode",
-        "type": "boolean",
-        "read": true,
-        "write": false,
-        "role": "indicator.state"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741788050,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.connected": {
-    "_id": "system.adapter.fb-tr064-mon.0.connected",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 is connected",
-        "type": "boolean",
-        "read": true,
-        "write": false,
-        "role": "indicator.state"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741788079,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0.alive": {
-    "_id": "system.adapter.fb-tr064-mon.0.alive",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 alive",
-        "type": "boolean",
-        "read": true,
-        "write": true,
-        "role": "indicator.state"
-    },
-    "native": {
-    },
-    "from": "system.host.NB04.cli",
-    "ts": 1580741788108,
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"system.adapter.fb-tr064-mon.0": {
-    "_id": "system.adapter.fb-tr064-mon.0",
-    "type": "instance",
-    "common": {
-        "name": "fb-tr064-mon",
-        "version": "0.0.1",
-        "news": {
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
-            }
+    "system.adapter.fb-tr064-mon.0.sigKill": {
+        "_id": "system.adapter.fb-tr064-mon.0.sigKill",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 kill signal",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "desc": "Process id that must survive. All other IDs must terminate itself",
+            "role": "state"
         },
-        "title": "Fritzbox TR-064",
-        "titleLang": {
-            "en": "Fritzbox TR-064",
-            "de": "Fritzbox TR-064",
-            "ru": "Fritzbox TR-064",
-            "pt": "Fritzbox TR-064",
-            "nl": "Fritzbox TR-064",
-            "fr": "Fritzbox TR-064",
-            "it": "Fritzbox TR-064",
-            "es": "Fritzbox TR-064",
-            "pl": "Fritzbox TR-064",
-            "zh-cn": "Fritzbox TR-064"
+        "native": {
         },
-        "desc": {
-            "en": "read Fritzbox data over TR-064",
-            "de": "Fritzbox Daten über TR-064 auslesen",
-            "ru": "читать данные Fritzbox через TR-064",
-            "pt": "ler dados Fritzbox sobre TR-064",
-            "nl": "Fritzbox-gegevens lezen via TR-064",
-            "fr": "lire les données Fritzbox sur TR-064",
-            "it": "leggi i dati di Fritzbox su TR-064",
-            "es": "leer datos de Fritzbox sobre TR-064",
-            "pl": "odczyt danych Fritzbox przez TR-064",
-            "zh-cn": "通过TR-064读取Fritzbox数据"
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787751,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon.0.eventLoopLag": {
+        "_id": "system.adapter.fb-tr064-mon.0.eventLoopLag",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 Node.js event loop lag",
+            "desc": "Node.js event loop lag in ms averaged over 15 seconds",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "state",
+            "unit": "ms"
         },
-        "authors": [
-            "truegreyhound <truegreyhound@gmx.net>"
-        ],
-        "keywords": [
-            "fritzbox",
-            "tr-064",
-            "network",
-            "callmonitor"
-        ],
-        "license": "MIT",
-        "platform": "Javascript/Node.js",
-        "main": "build/main.js",
-        "icon": "fb-tr064-mon.png",
-        "enabled": false,
-        "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
-        "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
-        "loglevel": "debug",
-        "mode": "daemon",
-        "type": "infrastructure",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "poll",
-        "materialize": true,
-        "dependencies": [
-            {
-                "js-controller": ">=1.4.2"
-            }
-        ],
-        "installedVersion": "0.0.1",
-        "host": "NB04"
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787781,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "native": {
-        "option1": true,
-        "option2": "42",
-        "ipaddress": "192.168.200.101",
-        "username": "TR064",
-        "password": "tr064!Pty92",
-        "interval": 167,
-        "history": "",
-        "dateformat": "yyyy.mm.dd hh:MM:ss"
+    "system.adapter.fb-tr064-mon.0.outputCount": {
+        "_id": "system.adapter.fb-tr064-mon.0.outputCount",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 events output counter",
+            "desc": "State's outputs in 15 seconds",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "state",
+            "unit": "events/15 seconds"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787810,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "from": "system.adapter.admin.0",
-    "ts": 1580929530445,
-    "acl": {
-        "object": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
+    "system.adapter.fb-tr064-mon.0.inputCount": {
+        "_id": "system.adapter.fb-tr064-mon.0.inputCount",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 events input counter",
+            "desc": "State's inputs in 15 seconds",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "state",
+            "unit": "events/15 seconds"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787840,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "user": "system.user.admin"
-},
-"system.adapter.fb-tr064-mon.0.logLevel": {
-    "_id": "system.adapter.fb-tr064-mon.0.logLevel",
-    "type": "state",
-    "common": {
-        "name": "fb-tr064-mon.0 loglevel",
-        "type": "string",
-        "read": true,
-        "write": true,
-        "desc": "Loglevel of the adapter. Will be set on start with defined value but can be overridden during runtime",
-        "role": "state"
+    "system.adapter.fb-tr064-mon.0.uptime": {
+        "_id": "system.adapter.fb-tr064-mon.0.uptime",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 uptime",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "indicator.state",
+            "unit": "seconds"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787870,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "native": {
+    "system.adapter.fb-tr064-mon.0.memRss": {
+        "_id": "system.adapter.fb-tr064-mon.0.memRss",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 resident Set Size",
+            "desc": "Resident set size",
+            "read": true,
+            "write": false,
+            "type": "number",
+            "role": "indicator.state",
+            "unit": "MB"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787899,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
-    }
-},
-"fb-tr064-mon.0.testVariable": {
-    "type": "state",
-    "common": {
-        "name": "testVariable",
-        "type": "boolean",
-        "role": "indicator",
-        "read": true,
-        "write": true
+    "system.adapter.fb-tr064-mon.0.memHeapTotal": {
+        "_id": "system.adapter.fb-tr064-mon.0.memHeapTotal",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 total Size of the Heap",
+            "read": true,
+            "write": false,
+            "type": "number",
+            "role": "indicator.state",
+            "unit": "MB"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787930,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "native": {
+    "system.adapter.fb-tr064-mon.0.memHeapUsed": {
+        "_id": "system.adapter.fb-tr064-mon.0.memHeapUsed",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 heap actually Used",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "indicator.state",
+            "unit": "MB"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787962,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     },
-    "from": "system.adapter.fb-tr064-mon.0",
-    "user": "system.user.admin",
-    "ts": 1580890817075,
-    "_id": "fb-tr064-mon.0.testVariable",
-    "acl": {
-        "object": 1636,
-        "state": 1636,
-        "owner": "system.user.admin",
-        "ownerGroup": "system.group.administrator"
+    "system.adapter.fb-tr064-mon.0.cputime": {
+        "_id": "system.adapter.fb-tr064-mon.0.cputime",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0.cputime",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "indicator.state",
+            "unit": "seconds"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741787992,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon.0.cpu": {
+        "_id": "system.adapter.fb-tr064-mon.0.cpu",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0.cpu",
+            "type": "number",
+            "read": true,
+            "write": false,
+            "role": "indicator.state",
+            "unit": "% of one core"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741788022,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon.0.compactMode": {
+        "_id": "system.adapter.fb-tr064-mon.0.compactMode",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0.compactMode",
+            "type": "boolean",
+            "read": true,
+            "write": false,
+            "role": "indicator.state"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741788050,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon.0.connected": {
+        "_id": "system.adapter.fb-tr064-mon.0.connected",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 is connected",
+            "type": "boolean",
+            "read": true,
+            "write": false,
+            "role": "indicator.state"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741788079,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon.0.alive": {
+        "_id": "system.adapter.fb-tr064-mon.0.alive",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 alive",
+            "type": "boolean",
+            "read": true,
+            "write": true,
+            "role": "indicator.state"
+        },
+        "native": {
+        },
+        "from": "system.host.NB04.cli",
+        "ts": 1580741788108,
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "system.adapter.fb-tr064-mon.0": {
+        "_id": "system.adapter.fb-tr064-mon.0",
+        "type": "instance",
+        "common": {
+            "name": "fb-tr064-mon",
+            "version": "0.0.1",
+            "news": {
+                "0.0.1": {
+                    "en": "initial release",
+                    "de": "Erstveröffentlichung",
+                    "ru": "Начальная версия",
+                    "pt": "lançamento inicial",
+                    "nl": "Eerste uitgave",
+                    "fr": "Première version",
+                    "it": "Versione iniziale",
+                    "es": "Versión inicial",
+                    "pl": "Pierwsze wydanie",
+                    "zh-cn": "首次出版"
+                }
+            },
+            "title": "Fritzbox TR-064",
+            "titleLang": {
+                "en": "Fritzbox TR-064",
+                "de": "Fritzbox TR-064",
+                "ru": "Fritzbox TR-064",
+                "pt": "Fritzbox TR-064",
+                "nl": "Fritzbox TR-064",
+                "fr": "Fritzbox TR-064",
+                "it": "Fritzbox TR-064",
+                "es": "Fritzbox TR-064",
+                "pl": "Fritzbox TR-064",
+                "zh-cn": "Fritzbox TR-064"
+            },
+            "desc": {
+                "en": "read Fritzbox data over TR-064",
+                "de": "Fritzbox Netzwerkdaten über TR-064 auslesen"
+            },
+            "authors": [
+                "truegreyhound <truegreyhound@gmx.net>"
+            ],
+            "keywords": [
+                "fritzbox",
+                "tr-064",
+                "network",
+                "callmonitor"
+            ],
+            "license": "MIT",
+            "platform": "Javascript/Node.js",
+            "main": "build/main.js",
+            "icon": "fb-tr064-mon.png",
+            "enabled": false,
+            "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
+            "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
+            "loglevel": "debug",
+            "mode": "daemon",
+            "type": "infrastructure",
+            "compact": true,
+            "connectionType": "local",
+            "dataSource": "poll",
+            "materialize": true,
+            "dependencies": [
+                {
+                    "js-controller": ">=1.4.2"
+                }
+            ],
+            "installedVersion": "0.0.1",
+            "host": "NB04"
+        },
+        "native": {
+            "option1": true,
+            "option2": "42",
+            "ipaddress": "192.168.200.101",
+            "username": "TR064",
+            "password": "tr064!Pty92",
+            "interval": 167,
+            "history": "",
+            "dateformat": "yyyy.mm.dd hh:MM:ss"
+        },
+        "from": "system.adapter.admin.0",
+        "ts": 1580929530445,
+        "acl": {
+            "object": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        },
+        "user": "system.user.admin"
+    },
+    "system.adapter.fb-tr064-mon.0.logLevel": {
+        "_id": "system.adapter.fb-tr064-mon.0.logLevel",
+        "type": "state",
+        "common": {
+            "name": "fb-tr064-mon.0 loglevel",
+            "type": "string",
+            "read": true,
+            "write": true,
+            "desc": "Loglevel of the adapter. Will be set on start with defined value but can be overridden during runtime",
+            "role": "state"
+        },
+        "native": {
+        },
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
+    },
+    "fb-tr064-mon.0.testVariable": {
+        "type": "state",
+        "common": {
+            "name": "testVariable",
+            "type": "boolean",
+            "role": "indicator",
+            "read": true,
+            "write": true
+        },
+        "native": {
+        },
+        "from": "system.adapter.fb-tr064-mon.0",
+        "user": "system.user.admin",
+        "ts": 1580890817075,
+        "_id": "fb-tr064-mon.0.testVariable",
+        "acl": {
+            "object": 1636,
+            "state": 1636,
+            "owner": "system.user.admin",
+            "ownerGroup": "system.group.administrator"
+        }
     }
 }

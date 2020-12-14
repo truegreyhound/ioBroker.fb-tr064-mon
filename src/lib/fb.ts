@@ -7,11 +7,12 @@ import request = require('request');
 import crypto = require('crypto');
 //const axios = require("axios");
 
-import util = require('util');
+//!P!import util = require('util');
 
 //const EventEmitter = require('events');
 import * as c from './constants';
 import mFbObj = require('./instance-objects');
+//import { stringify } from 'querystring';
 
 
 interface HttpResponse<T> extends Response {
@@ -383,12 +384,16 @@ export class Fb {
 			try {
 				request(sUrl, (error: Error, response: any, body: any) => {
 					if (error) reject(error);
+
 					if (!error && response.statusCode != 200) {
 						reject('Invalid status code <' + response.statusCode + '>');
 					}
-					parseString(body, {explicitArray: false}, function (err: Error, result: any) {
+					parseString(body, {explicitArray: false},  (err: Error, result: any) => {
 						if (err) reject(error);
-						if (!err) resolve(result);
+
+						this.that.log.silly('fb.getDeviceList result: ' + JSON.stringify(result));
+
+						if (!err) resolve(JSON.parse(JSON.stringify(result).replace(/X_AVM\-/g, 'X_AVM_')));
 					});
 				});
 			}
@@ -417,7 +422,7 @@ export class Fb {
 	// Soap query
 	async soapAction(oDevice: Fb, sUrl: string, sServiceType: string, sAction: string, vars: any): Promise<any> {
 		try {
-			this.that.log.debug('soapAction started, fb.host ' + oDevice.host + '; sUrl: ' + sUrl + '; sServiceType: ' + sServiceType + '; sAction: ' + sAction + '; vars: ' + JSON.stringify(vars));
+			this.that.log.debug('fb.soapAction started, fb.host ' + oDevice.host + '; sUrl: ' + sUrl + '; sServiceType: ' + sServiceType + '; sAction: ' + sAction + '; vars: ' + JSON.stringify(vars));
 
 			return new Promise((resolve, reject) => {
 				let sHead = '';
@@ -475,7 +480,7 @@ export class Fb {
 				const sUri: string = sProto + this.host + ':' + nPort + sUrl;
 				const that = this.that; //this speichern
                 
-				this.that.log.debug('soapAction, request url ' + sUri + '; body: ' + sBody);
+				this.that.log.debug('fb.soapAction, request url ' + sUri + '; body: ' + sBody);
 				//this.that.log.debug('body ' + body);
 
 				//!I! https://stackoverflow.com/questions/31258136/how-to-handle-timeout-using-request-with-nodejs
@@ -492,15 +497,15 @@ export class Fb {
 					body: sBody,
 					timeout: 4000
 				}, (error: Error, response: any, body: any) => {
-					that.log.debug('soapAction, response: ' + oDevice.auth.chCount + ' ' + JSON.stringify(response));
+					that.log.debug('fb.soapAction, response: ' + oDevice.auth.chCount + ' ' + JSON.stringify(response));
 					//!T!that.log.debug('soapAction, body response: ' + body);
                     
 					if (!error && response.statusCode == 200) {
 						parseString(body, {explicitArray: false}, async (err: Error, result: any) => {
-							this.that.log.debug('soapAction, soap1 ' + oDevice.auth.chCount + ' ' + JSON.stringify(result));
+							this.that.log.debug('fb.soapAction, soap1 ' + oDevice.auth.chCount + ' ' + JSON.stringify(result));
 							//let challenge = false;
 
-							if (err) reject('soapAction ' + sAction + ' -> ' + error);
+							if (err) reject('fb.soapAction ' + sAction + ' -> ' + error);
 
 							let res = {};
 							const env = result['s:Envelope'];
@@ -525,20 +530,20 @@ export class Fb {
 												oDevice.auth.sn as string);
 
 											oDevice.auth.chCount++;
-											that.log.debug('soapAction, challenge, oDevice.auth: ' + JSON.stringify(oDevice.auth));
+											that.log.debug('fb.soapAction, challenge, oDevice.auth: ' + JSON.stringify(oDevice.auth));
 											
 											// Repeat request.
 											let resp = null;
 											try {
-												that.log.debug('soapAction call soapAction with, fb.host ' + oDevice.host + '; sUrl: ' + sUrl + '; sServiceType: ' + sServiceType + '; sAction: ' + sAction + '; vars: ' + JSON.stringify(vars));
+												that.log.debug('fb.soapAction call soapAction with, fb.host ' + oDevice.host + '; sUrl: ' + sUrl + '; sServiceType: ' + sServiceType + '; sAction: ' + sAction + '; vars: ' + JSON.stringify(vars));
 
 												resp = await oDevice.soapAction(oDevice, sUrl, sServiceType, sAction, vars);
 												//this.that.log.debug('soapAction, soap2 ' + device._auth.chCount + ' ' + JSON.stringify(resp));
 												resolve(resp);
 											} catch (e) {
-												that.log.error('soapAction, challenge, error: ' + ((e.message) ? e.message : JSON.stringify(resp)));
+												that.log.error('fb.soapAction, challenge, error: ' + ((e.message) ? e.message : JSON.stringify(resp)));
 												
-												reject('soapAction, challenge, error: ' + ((e.message) ? e.message : JSON.stringify(resp)));
+												reject('fb.soapAction, challenge, error: ' + ((e.message) ? e.message : JSON.stringify(resp)));
 											}    
 										}
 									} else if (sHeader['h:NextChallenge']) {
@@ -552,7 +557,7 @@ export class Fb {
 											oDevice.auth.sn as string);
 
 										oDevice.auth.chCount = 0;
-										that.log.debug('soapAction, NextChallenge, oDevice.auth: ' + JSON.stringify(oDevice.auth));
+										that.log.debug('fb.soapAction, NextChallenge, oDevice.auth: ' + JSON.stringify(oDevice.auth));
 									}
 								}
 								if (env['s:Body']) {
@@ -567,42 +572,42 @@ export class Fb {
 										const fault = body['s:Fault'];
 										
 										//this.that.log.debug('soapAction, soap3c ' + device._auth.chCount + ' ' + JSON.stringify(fault));
-										reject('soapAction, device responded with fault ' + fault);
+										reject('fb.soapAction, device responded with fault ' + fault);
 										res = fault;
 
 										if (oDevice.auth.chCount > 1){
-											that.log.error('soapAction, fault ' + oDevice.auth.chCount + ' ' + JSON.stringify(fault));
+											that.log.error('fb.soapAction, fault ' + oDevice.auth.chCount + ' ' + JSON.stringify(fault));
 
-											reject('soapAction, device responded with fault: ' + JSON.stringify(fault));
+											reject('fb.soapAction, device responded with fault: ' + JSON.stringify(fault));
 										} 
 									}
 								}
 								//this.that.log.debug('soapAction, soap3d ' + device._auth.chCount + ' ' + JSON.stringify(res));
 								resolve(res);
 							} catch (err) {
-								that.log.error('soapAction: ' + sAction + ' -> ' + err);
+								that.log.error('fb.soapAction: ' + sAction + ' -> ' + err);
 							}
 						});
 					}
 					if (!error && response.statusCode != 200) {
 						//this.that.log.error('soapAction error ' + body['s:Fault']);
-						reject('soapAction ' + sAction + ' -> ' + JSON.stringify(response));
+						reject('fb.soapAction ' + sAction + ' -> ' + JSON.stringify(response));
 					}
 					if (error) {
 						requestError = error;
 
 						//this.that.log.error('soapAction error: ' + error);
-						reject('soapAction ' + sAction + ' -> ' + error);
+						reject('fb.soapAction ' + sAction + ' -> ' + error);
 					}
 				}).on('abort', function(){
 					setTimeout(() => { 
 						if (requestError != 'ETIMEDOUT') reject('soapAction timeout, error: ' + requestError);
-						else reject('soapAction timeout, error: REQUEST_ABORTED');
+						else reject('fb.soapAction timeout, error: REQUEST_ABORTED');
 					}, 1000)
 				});
 			});
 		} catch (e) {
-			this.that.log.error('soapAction, error: ' + e.message);
+			this.that.log.error('fb.soapAction, error: ' + e.message);
 		}    
 	}
 } // soapAction()

@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "fb-tr064-mon",
-        "version": "0.3.8",
+        "version": "0.3.9",
         "news": {
+            "0.3.9": {
+                "en": "json list generation redesigned"
+            },
             "0.3.8": {
                 "en": "renamed from fb-tr-064 to fb-tr064-mon"
             },
@@ -48,16 +51,8 @@
             "zh-cn": "Fritzbox TR-064 mon"
         },
         "desc": {
-            "en": "read Fritzbox data over TR-064",
-            "de": "Fritzbox Daten über TR-064 auslesen",
-            "ru": "читать данные Fritzbox через TR-064",
-            "pt": "ler dados Fritzbox sobre TR-064",
-            "nl": "Fritzbox-gegevens lezen via TR-064",
-            "fr": "lire les données Fritzbox sur TR-064",
-            "it": "leggi i dati di Fritzbox su TR-064",
-            "es": "leer datos de Fritzbox sobre TR-064",
-            "pl": "odczyt danych Fritzbox przez TR-064",
-            "zh-cn": "通过TR-064读取Fritzbox数据"
+            "en": "read Fritzbox network data over TR-064",
+            "de": "Fritzbox Netzwerkdaten über TR-064 auslesen"
         },
         "authors": [
             "truegreyhound <truegreyhound@gmx.net>"
@@ -72,7 +67,7 @@
         "platform": "Javascript/Node.js",
         "main": "build/main.js",
         "icon": "fb-tr064-mon.png",
-        "enabled": false,
+        "enabled": true,
         "extIcon": "https://raw.githubusercontent.com/truegreyhound/ioBroker.fb-tr064-mon/master/admin/fb-tr064-mon.png",
         "readme": "https://github.com/truegreyhound/ioBroker.fb-tr064-mon/blob/master/README.md",
         "loglevel": "info",

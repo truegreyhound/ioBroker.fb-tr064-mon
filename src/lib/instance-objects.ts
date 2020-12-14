@@ -19,7 +19,9 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 			that.log.debug('setStateAsyncEx, setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
 			// obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP"} --> created
 
-			if (((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
+			if (err) that.log.error('setStateAsyncEx error: ' + JSON.stringify(err));
+
+			if (!(err) && ((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
 				// state already exist -->  no value should be set || state new created --> set value
 				if(_setValueDelay > 0) {
 					await that.getStateAsync(_id)
@@ -165,27 +167,37 @@ export async function createInstanceRootObjects(that: any): Promise<void> {
 			[c.idFritzBoxVersion, 'state', c.idFritzBoxVersion, 'string', 'info', 0, true, false, 'Fritz!Box version'],
 			[c.idCountDevicesTotal, 'state', c.idCountDevicesTotal, 'number', 'value', 0, true, false, 'Number of devices'],
 			[c.idCountDevicesActive, 'state', c.idCountDevicesActive, 'number', 'value', 0, true, false, 'Number of active devices'],
+
 			[c.idCountDevicesActiveLAN, 'state', c.idCountDevicesActiveLAN, 'number', 'value', 0, true, false, 'Number of active LAN devices'],
 			[c.idCountDevicesActiveWLAN, 'state', c.idCountDevicesActiveWLAN, 'number', 'value', 0, true, false, 'Number of active WLAN devices'],
 			[c.idCountDevicesActiveGuests, 'state', c.idCountDevicesActiveGuests, 'number', 'value', 0, true, false, 'Number of active WLAN devices from guests'],
 			[c.idSupportedFunctions_FritzBoxVersion, 'state', c.idSupportedFunctions_FritzBoxVersion, 'string', 'info', '', true, false, 'Fritz!Box version of last check of supported functions'],
+
 			[c.idFritzBoxName, 'state', c.idFritzBoxName, 'string', 'info', '', true, false, 'Fritz!Box name'],
 			[c.idFritzBoxIP, 'state', c.idFritzBoxIP, 'string', 'info', '', true, false, 'Fritz!Box ip address'],
 			[c.idFritzBoxMAC, 'state', c.idFritzBoxMAC, 'string', 'info', '', true, false, 'Fritz!Box mac address'],
-			[c.idDeviceListAll_JSON, 'state', c.idDeviceListAll_JSON, 'string', 'info', '[]', true, false, 'JSON table, all devices'],
+
 			[c.idDeviceListInactive_JSON, 'state', c.idDeviceListInactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all inactive devices'],
 			[c.idDeviceListActive_JSON, 'state', c.idDeviceListActive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active devices'],
 			[c.idDeviceListActiveLAN_JSON, 'state', c.idDeviceListActiveLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active LAN devices'],
 			[c.idDeviceListActiveWLAN_JSON, 'state', c.idDeviceListActiveWLAN_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active WLAN devices'],
+
 			[c.idDeviceListActiveGuests_JSON, 'state', c.idDeviceListActiveGuests_JSON, 'string', 'info', '[]', true, false, 'JSON table, all active guests devices'],
 			[c.idDeviceList_Warn_JSON, 'state', c.idDeviceList_Warn_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched devices'],
 			[c.idDeviceList_Warn_active_JSON, 'state', c.idDeviceList_Warn_active_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched active devices'],
 			[c.idDeviceList_Warn_inactive_JSON, 'state', c.idDeviceList_Warn_inactive_JSON, 'string', 'info', '[]', true, false, 'JSON table, all watched inactive devices'],
+
 			[c.idDeviceList_NewAddedDevices_JSON, 'state', c.idDeviceList_NewAddedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all new added device from Fritz!Box'],
 			[c.idDeviceList_RemovedDevices_JSON, 'state', c.idDeviceList_RemovedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, all removed devices from Fritz!Box network list'],
-			[c.idDeviceList_DailyChanges, 'state', c.idDeviceList_DailyChanges, 'string', 'info', '[]', true, false, 'JSON table, added, changed and remove devices on each day'],
+			[c.idDeviceList_DailyChanges_JSON, 'state', c.idDeviceList_DailyChanges_JSON, 'string', 'info', '[]', true, false, 'JSON table, added, changed and remove devices on each day'],
 			[c.idDeviceList_DailyChanges_count, 'state', c.idDeviceList_DailyChanges_count, 'number', 'info', 0, true, true, 'item count in daily changes table'],
 			[c.idDeviceList_DailyChanges_maxCount, 'state', c.idDeviceList_DailyChanges_maxCount, 'number', 'info', 100, true, true, 'max item count in daily changes table'],
+
+			[c.idDeviceList_CachedDevices_JSON, 'state', c.idDeviceList_CachedDevices_JSON, 'string', 'info', '[]', true, false, 'JSON table, with all devices and configuration datam internal cache'],
+			[c.idDeviceList_View_JSON, 'state', c.idDeviceList_View_JSON, 'string', 'info', '[]', true, false, 'JSON table for viewing in VIS e.g.'],
+			[c.idDeviceList_View_JSON_Count, 'state', c.idDeviceList_View_JSON_Count, 'number', 'info', 0, true, false, 'Item count of viewing JSON table'],
+			[c.idDeviceList_View_Name, 'state', c.idDeviceList_View_Name, 'string', 'info', 'dailyChanges', true, false, 'Input selector to toggle JSON table for viewing'],
+
 			[c.idDeviceList_IPChanged, 'state', c.idDeviceList_IPChanged, 'boolean', 'info', false, true, false, 'ip address has changed'],
 			[c.idDeviceList_OwnerChanged, 'state', c.idDeviceList_OwnerChanged, 'boolean', 'info', false, true, false, 'owner name has changed'],
 			[c.idDeviceList_WarnChanged, 'state', c.idDeviceList_WarnChanged, 'boolean', 'info', false, true, false, 'warn state has changed'],
@@ -226,7 +238,7 @@ export async function createInstanceRootObjects(that: any): Promise<void> {
 	aAllDevices		- aktuelle List von der Fritz!Box
 */
 //export async function updateDevices(that: any, aCfgDevicesList: JSON[], aAllActiveDevices: JSON[]) {
-export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAllDevices: JSON[]) {
+export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAllDevices: c.ICachedDevice[]) {
 	const fctNameId: string = 'updateDevices';
 	that.log.debug(fctNameId + ' started');
 	that.log.debug(fctNameId + ', aAllActiveDevices: ' + JSON.stringify(aAllDevices));
@@ -253,17 +265,17 @@ export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aAl
 		that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
 		// {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
 
-		let oDeviceData: any = {};
+		let oDeviceData: c.ICachedDevice;
 		const oCfgDeviceOld: c.IDevice = aCfgDevicesListOld.find(function (item: any) { return ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress));});
 		
 		that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
 		
 		if (oCfgDevice.macaddress == '') {
-			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.IPAddress === oCfgDevice.ipaddress;});
+			oDeviceData = <c.ICachedDevice>aAllDevices.find(function (item: any) { return item.IPAddress === oCfgDevice.ipaddress;});
 
 			//!P!#3 hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
 		} else {
-			oDeviceData = <JSON>aAllDevices.find(function (item: any) { return item.MACAddress === oCfgDevice.macaddress;});
+			oDeviceData = <c.ICachedDevice>aAllDevices.find(function (item: any) { return item.MACAddress === oCfgDevice.macaddress;});
 		}
 
 		if (oCfgDevice.watch) {

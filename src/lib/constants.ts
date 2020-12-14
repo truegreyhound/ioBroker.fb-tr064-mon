@@ -38,6 +38,23 @@ export interface IAuth {
 	chCount: number;
 }
 
+export interface IFbDevice {
+	Index: number;
+	IPAddress: string;
+	MACAddress: string;
+	Active: string;			// number?
+	HostName: string;
+	InterfaceType: string;
+	X_AVM_DE_Port: string;	// number?
+	X_AVM_DE_Speed: string;	// number??
+	X_AVM_DE_UpdateAvailable: string;	// number?
+	X_AVM_DE_UpdateSuccessful: string;
+	X_AVM_DE_InfoURL: string;
+	X_AVM_DE_Model: string;
+	X_AVM_DE_URL: string;
+	X_AVM_DE_Guest: string;				// number?
+}
+
 export interface IDevice {
 	devicename: string;
 	ipaddress: string;
@@ -58,11 +75,39 @@ export interface IDeviceList {
 	error?: Error;
 }
 
+export enum CachedDevice_State {
+	new = 'new',
+	non = 'non',
+	removed = 'removed',
+	changed = 'changed',
+};
+
+
+export interface ICachedDevice {
+	State: CachedDevice_State;
+	DeviceName: string;
+	Active: boolean;
+	Active_lc: number;
+	Inactive_lc: number;
+	HostName: string;
+	HostName_lc: number;
+	IPAddress: string;
+	IPAddress_lc: number;
+	MACAddress: string;
+	Interfacetype: string;
+	Guest: boolean;
+	Port: number;
+	Speed: number;
+	ts: number;
+	Warn: boolean;
+	Watch: boolean;
+}
 
 export interface IChangedDevice {
 	DeviceName: string;
 	Active: boolean;
 	Active_lc: number;
+	Inactive_lc: number;
 	HostName: string;
 	HostName_lc: number;
 	IPAddress: string;
@@ -94,9 +139,8 @@ export const idCountDevicesActiveLAN = dppDevices + 'countDevicesActiveLAN';
 export const idCountDevicesActiveWLAN = dppDevices + 'countDevicesActiveWLAN';
 export const idCountDevicesActiveGuests = dppDevices + 'countDevicesActiveGuests';
 
-export const idDeviceListAll_JSON = dppDevices + 'deviceListAll_JSON';
-export const idDeviceListInactive_JSON = dppDevices + 'deviceListInactive_JSON';
 export const idDeviceListActive_JSON = dppDevices + 'deviceListActive_JSON';
+export const idDeviceListInactive_JSON = dppDevices + 'deviceListInactive_JSON';
 export const idDeviceListActiveLAN_JSON = dppDevices + 'deviceListActiveLAN_JSON';
 export const idDeviceListActiveWLAN_JSON = dppDevices + 'deviceListActiveWLAN_JSON';
 export const idDeviceListActiveGuests_JSON = dppDevices + 'deviceListActiveGuests_JSON';
@@ -108,9 +152,14 @@ export const idDeviceList_Warn_JSON = dppDevices + 'deviceList_warn_JSON';
 export const idDeviceList_Warn_active_JSON = dppDevices + 'deviceList_warn_active_JSON';
 export const idDeviceList_Warn_inactive_JSON = dppDevices + 'deviceList_warn_inactive_JSON';
 
-export const idDeviceList_DailyChanges = dppDevices + 'deviceList_daily_changes_JSON';
+export const idDeviceList_DailyChanges_JSON = dppDevices + 'deviceList_daily_changes_JSON';
 export const idDeviceList_DailyChanges_count = dppDevices + 'deviceList_daily_changes_count';
 export const idDeviceList_DailyChanges_maxCount = dppDevices + 'deviceList_daily_changes_max_count';
+
+export const idDeviceList_CachedDevices_JSON = dppDevices + 'deviceList_cached_devices_JSON';
+export const idDeviceList_View_JSON = dppDevices + 'deviceList_view_JSON';
+export const idDeviceList_View_JSON_Count = dppDevices + 'deviceList_view_JSON_count';
+export const idDeviceList_View_Name = dppDevices + 'deviceList_view_name';
 
 export const idDeviceList_IPChanged = dppDevices + 'deviceList_ip_changed';			// IP
 export const idDeviceList_OwnerChanged = dppDevices + 'deviceList_owner_changed';	// owner

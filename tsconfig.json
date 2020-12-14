@@ -4,39 +4,52 @@
 	"compilerOptions": {
 		// do not compile anything, this file is just to configure type checking
 		// the compilation is configured in tsconfig.build.json
-		"noEmit": true,
-
-		// check JS files, but do not compile them => tsconfig.build.json
-		"allowJs": true,
-		"checkJs": true,
-
-		"skipLibCheck": true, // Don't report errors in 3rd party definitions
+		"noEmit": true,					/* Do not emit outputs. */
 		"noEmitOnError": true,
+		// check JS files, but do not compile them => tsconfig.build.json
+		"allowJs": true,				/* Allow javascript files to be compiled. */
+		"checkJs": true,				/* Report errors in .js files. */
+
+		"skipLibCheck": true,			/* Don't report errors in 3rd party definitions */
 		"outDir": "./build/",
 		"removeComments": false,
-		"module": "commonjs",
-		"moduleResolution": "node",
+		"module": "commonjs",			/* Specify module code generation: 'none', commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */ 
+		"moduleResolution": "node",		/* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
 		"esModuleInterop": true,
 		// this is necessary for the automatic typing of the adapter config
 		"resolveJsonModule": true,
 
-		"jsx": "react",
+		"jsx": "react",					/* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */	
 
 		// Set this to false if you want to disable the very strict rules (not recommended)
-		"strict": true,
+		"strict": true,					/* Enable all strict type-checking options. */
 		// Or enable some of those features for more fine-grained control
-		// "strictNullChecks": true,
+		// "strictNullChecks": true,	 /* Enable strict null checks. */
 		// "strictPropertyInitialization": true,
 		// "strictBindCallApply": true,
-		// "noImplicitAny": true,
-		// "noUnusedLocals": true,
-		// "noUnusedParameters": true,
+		// "noImplicitAny": true,		/* Raise error on expressions and declarations with an implied 'any' type. */
+		// "noUnusedLocals": true,		/* Report errors on unused locals. */
+		// "noUnusedParameters": true,	/* Report errors on unused parameters. */
+		// "strictNullChecks": true,	/* Enable strict null checks. */
+		// "noImplicitThis": true,		/* Raise error on 'this' expressions with an implied 'any' type. */
+		// "noImplicitReturns": true,	/* Report error when not all code paths in function return a value. */
+    	// "noFallthroughCasesInSwitch": true,	/* Report errors for fallthrough cases in switch statement. */
 
+		// enable the new reflection API
+		// "experimentalDecorators": true,	/* Enables experimental support for ES7 decorators. */
+		// "emitDecoratorMetadata": true,	/* Enables experimental support for emitting type metadata for decorators. */
+
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+
+		// "outFile": "./",				/* Concatenate and emit output to single file. */
+		// "outDir": "./",				/* Redirect output structure to the directory. */
+		// "rootDir": ".",					/* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
 		// Consider targetting es2017 or higher if you require the new NodeJS 8+ features
-		"target": "es2017",
+		"target": "es2017",				/* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'. */
 
-		"sourceMap": false,
-		"inlineSourceMap": false,
+		"sourceMap": false,				/* Generates corresponding '.map' file. */
+		"inlineSourceMap": false,		/* Emit a single file with source maps instead of having a separate file. */
 		"watch": false
 	},
 	"include": [

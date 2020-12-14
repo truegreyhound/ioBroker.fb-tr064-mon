@@ -173,7 +173,7 @@ JSON table, all active WLAN devices
 ### deviceListActive_JSON
 JSON table, all active devices
 
-### deviceListAll_JSON
+### deviceList_cached_devices_JSON
 JSON table, all devices
 
 ### deviceListInactive_JSON
@@ -239,8 +239,11 @@ OS version for the supported functions of the Fritzbox
 OS version of the Fritzbox
 
 
-## Changelog 
+## Changelog
+### 0.3.9 json list generation redesigned
+
 ### 0.3.8 renamed from fb-tr-064 to fb-tr064-mon
+
 ### 0.3.7 add daily device change list to monitore changes
 
 ### 0.3.6 add new and change flag in device table, so if clear which device is new or changed

@@ -240,6 +240,8 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.2 fix device goes off warning
+
 ### 0.4.1
 * (greyhound) fix suported function detection
 * (greyhound) fix type conversations

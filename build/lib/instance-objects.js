@@ -208,10 +208,10 @@ exports.createInstanceRootObjects = createInstanceRootObjects;
     aAllDevices		- aktuelle List von der Fritz!Box
 */
 //export async function updateDevices(that: any, aCfgDevicesList: JSON[], aAllActiveDevices: JSON[]) {
-async function updateDevices(that, aCfgDevicesList, aAllDevices) {
+async function updateDevices(that, aCfgDevicesList, aCachedDevices) {
     const fctNameId = 'io.updateDevices';
     that.log.debug(fctNameId + ' started');
-    that.log.debug(fctNameId + ', aAllActiveDevices: ' + JSON.stringify(aAllDevices));
+    that.log.debug(fctNameId + ', aAllActiveDevices: ' + JSON.stringify(aCachedDevices));
     /*!P!#4
     Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
     nach Durchlauf alle DPs in Liste löschen
@@ -220,90 +220,76 @@ async function updateDevices(that, aCfgDevicesList, aAllDevices) {
     let bDataChangedOwner = false;
     let bDataChangedWarn = false;
     let bDataChangedWatch = false;
-    let aCfgDevicesListOld = null;
-    if (that.config.devicesListOld)
-        aCfgDevicesListOld = JSON.parse(JSON.stringify(that.config.devicesListOld)); // list from last confiuration on admin site
-    //!D!that.log.debug(fctNameId + ', aCfgDevicesListOld: ' + JSON.stringify(aCfgDevicesListOld));
-    if (!aCfgDevicesListOld) {
+    let aCfgDevicesListOld = (that.config.devicesListOld ? JSON.parse(JSON.stringify(that.config.devicesListOld)) : null); // list from last save of confiuration on admin site
+    that.log.silly(fctNameId + ', aCfgDevicesListOld: ' + JSON.stringify(aCfgDevicesListOld));
+    if (!aCfgDevicesListOld)
         aCfgDevicesListOld = JSON.parse(JSON.stringify(aCfgDevicesList));
+    that.log.silly(fctNameId + ', aCfgDevicesListOld2: ' + JSON.stringify(aCfgDevicesListOld));
+    if (aCfgDevicesListOld && aCfgDevicesListOld.length > 0) {
+        aCfgDevicesList.map(async (oCfgDevice) => {
+            that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
+            // {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
+            const oCachedDevice = aCachedDevices.find(function (item) { return ((item.MACAddress && item.MACAddress === oCfgDevice.macaddress) || (item.IPAddress && item.IPAddress === oCfgDevice.ipaddress)); });
+            that.log.debug(fctNameId + ', oCachedDevice: ' + JSON.stringify(oCachedDevice));
+            const oCfgDeviceOld = aCfgDevicesListOld.find((item) => { return ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress)); });
+            that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
+            if (oCfgDevice.watch) {
+                // device watched, create datapoints / update value
+                check_set_deviceData(that, oCfgDevice, oCachedDevice);
+            }
+            const idx = aCfgDevicesList.indexOf(oCfgDevice);
+            aCfgDevicesList[idx].new = false;
+            aCfgDevicesList[idx].changed = false;
+            if (oCachedDevice) {
+                if (oCachedDevice.IPAddress != oCfgDevice.ipaddress) {
+                    // IP has changed
+                    if (that.config.warningDestination == 'log') {
+                        that.log.warn('IP-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oCachedDevice.IPAddress + '"; MAC: "' + oCachedDevice.MACAddress + '"');
+                    }
+                    if (that.config.warningDestination == 'telegram.0') {
+                        that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oCachedDevice.IPAddress + '"; MAC: "' + oCachedDevice.MACAddress + '"');
+                    }
+                    // update aCfgDevicesList
+                    if (idx >= 0) {
+                        aCfgDevicesList[idx].ipaddress = oCachedDevice.IPAddress;
+                        aCfgDevicesList[idx].changed = true;
+                        bDataChangedIP = true;
+                    }
+                }
+                if (oCfgDeviceOld) {
+                    if (oCfgDeviceOld.devicename != oCfgDevice.devicename) { // device name has changed (bases on MAC / IP) --> remove old data
+                        // check device exist
+                        await that.getObjectAsync(c.dppDevices + oCfgDeviceOld.devicename)
+                            .then(async (oDevice) => {
+                            if (oDevice) {
+                                that.log.debug(fctNameId + ', getObjectAsync; node "' + c.dppDevices + oCfgDeviceOld.devicename + '" for device exist');
+                                // save old dates
+                                await copy_oldDeviceData(that, oCfgDeviceOld, oCfgDevice);
+                                // remove old device object
+                                // !P! ggf. Option, ob das passieren soll
+                                delete_oldDeviceData(that, oCfgDeviceOld);
+                            }
+                            else {
+                                that.log.debug(fctNameId + ', getObjectAsync; old node "' + c.dppDevices + oCfgDeviceOld.devicename + '" for device does`t exist');
+                            }
+                        });
+                    }
+                    if (oCfgDeviceOld.ownername != oCfgDevice.ownername) {
+                        // owner has changed
+                        bDataChangedOwner = true;
+                    }
+                    if (oCfgDeviceOld.warn != oCfgDevice.warn) {
+                        // warn has changed
+                        bDataChangedWarn = true;
+                    }
+                    if (oCfgDeviceOld.watch != oCfgDevice.watch) {
+                        // watch has changed
+                        bDataChangedWatch = true;
+                    }
+                }
+            }
+        });
     }
-    that.log.debug(fctNameId + ', aCfgDevicesListOld2: ' + JSON.stringify(aCfgDevicesListOld));
-    aCfgDevicesList.map(async (oCfgDevice) => {
-        that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
-        // {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
-        let oDeviceData;
-        const oCfgDeviceOld = aCfgDevicesListOld.find((item) => { return ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress)); });
-        that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
-        if (oCfgDevice.macaddress == '') {
-            oDeviceData = aAllDevices.find(function (item) { return item.IPAddress === oCfgDevice.ipaddress; });
-            //!P!#3 hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
-        }
-        else {
-            oDeviceData = aAllDevices.find(function (item) { return item.MACAddress === oCfgDevice.macaddress; });
-        }
-        if (oCfgDevice.watch) {
-            // device watched, create datapoints / update value
-            check_set_deviceData(that, oCfgDevice, oDeviceData);
-        }
-        if (oCfgDevice.warn) {
-            // warn if device goes off
-            if (oCfgDevice.active != oDeviceData.Active && oDeviceData.Active == true) {
-                // device goes off
-                that.log.warn('device "' + oCfgDevice.devicename + '" goes off');
-            }
-        }
-        const idx = aCfgDevicesList.indexOf(oCfgDevice);
-        aCfgDevicesList[idx].new = false;
-        aCfgDevicesList[idx].changed = false;
-        if (oDeviceData) {
-            if (oDeviceData.IPAddress != oCfgDevice.ipaddress) {
-                // IP has changed
-                if (that.config.warningDestination == 'log') {
-                    that.log.warn('IP-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
-                }
-                if (that.config.warningDestination == 'telegram.0') {
-                    that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oDeviceData.IPAddress + '"; MAC: "' + oDeviceData.MACAddress + '"');
-                }
-                // update aCfgDevicesList
-                if (idx >= 0) {
-                    aCfgDevicesList[idx].ipaddress = oDeviceData.IPAddress;
-                    aCfgDevicesList[idx].changed = true;
-                    bDataChangedIP = true;
-                }
-            }
-            if (oCfgDeviceOld) {
-                if (oCfgDeviceOld.devicename != oCfgDevice.devicename) { // device name has changed (bases on MAC / IP) --> remove old data
-                    // check device exist
-                    await that.getObjectAsync(c.dppDevices + oCfgDeviceOld.devicename)
-                        .then(async (oDevice) => {
-                        if (oDevice) {
-                            that.log.debug(fctNameId + ', getObjectAsync; node "' + c.dppDevices + oCfgDeviceOld.devicename + '" for device exist');
-                            // save old dates
-                            await copy_oldDeviceData(that, oCfgDeviceOld, oCfgDevice);
-                            // remove old device object
-                            // !P! ggf. Option, ob das passieren soll
-                            delete_oldDeviceData(that, oCfgDeviceOld);
-                        }
-                        else {
-                            that.log.debug(fctNameId + ', getObjectAsync; old node "' + c.dppDevices + oCfgDeviceOld.devicename + '" for device does`t exist');
-                        }
-                    });
-                }
-                if (oCfgDeviceOld.ownername != oCfgDevice.ownername) {
-                    // owner has changed
-                    bDataChangedOwner = true;
-                }
-                if (oCfgDeviceOld.warn != oCfgDevice.warn) {
-                    // warn has changed
-                    bDataChangedWarn = true;
-                }
-                if (oCfgDeviceOld.watch != oCfgDevice.watch) {
-                    // watch has changed
-                    bDataChangedWatch = true;
-                }
-            }
-        }
-    });
     if (bDataChangedIP || bDataChangedOwner || bDataChangedWarn || bDataChangedWatch)
         that.config.devicesList = aCfgDevicesList;
     that.config.devicesListIPChanged = bDataChangedIP;

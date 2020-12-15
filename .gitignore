@@ -22,3 +22,4 @@ admin/i18n/*/flat.txt
 
 # no build artifacts
 build/
+.vs/iobroker.fb-tr064-mon/v15/.suo

@@ -12,10 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /*
  * Created with @iobroker/create-adapter v1.30.1
  */
+/*!P! [iobroker-community-adapters/ioBroker.tr-064] Changes in FritzOS higher 7.24 in the API (#191)
+    take attention to the next FritzOS, please.
+    https://avm.de/fritz-labor/frisch-aus-der-entwicklung/bekannte-probleme/
+
+    The API and Login with username and password should be changed and need some changes in the assigned tools ( adapters, scripts.. ).
+*/
 //!P!#3 instance-objects, updateDevices: hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
 /*!P!#4 instance-objects, updateDevices
-   Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
-   nach Durchlauf alle DPs in Liste löschen
+    Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
+    nach Durchlauf alle DPs in Liste löschen
 */
 /* !P!
 Wenn ein oder alle supported Functions auf false, dann Fehlermeldung und Adapter beenden, ggf. mit Hinweis, die Fritz!Box neu zu starten
@@ -172,8 +178,8 @@ async function createDeviceStatusLists(that, aFbDevices) {
             else {
                 // get configured parameter for device like macaddress, watch, warn, ...
                 // [{"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","new":false,"changed":false,"ownername":"","interfacetype":"","warn":false,"watch":false},{"devicename": . . .
-                const oCfgData = that.config.devicesList.find((item) => { return ((item.macaddress && item.macaddress === oFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === oFbDevice.IPAddress)); });
-                that.log.debug(fctName + ', oCfgData: ' + JSON.stringify(oCfgData));
+                const oCfgDevice = that.config.devicesList.find((item) => { return ((item.macaddress && item.macaddress === oFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === oFbDevice.IPAddress)); });
+                that.log.debug(fctName + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
                 // get device from adapter cache
                 let jCachedDevice = maCachedDevices.find((item) => { return ((item.MACAddress && item.MACAddress === oFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === oFbDevice.IPAddress)); });
                 console.log(fctName + ',  jCachedDevice: ' + JSON.stringify(jCachedDevice));
@@ -224,16 +230,16 @@ async function createDeviceStatusLists(that, aFbDevices) {
                     Count: 0,
                     Action: ''
                 };
-                if (!oCfgData) {
+                if (!oCfgDevice) {
                     // new device without adapter config
                     jCachedDevice.DeviceName = oFbDevice.HostName;
                     jChangedDevice.DeviceName = oFbDevice.HostName;
                 }
                 else {
-                    jCachedDevice.DeviceName = oCfgData.devicename;
-                    jChangedDevice.DeviceName = oCfgData.devicename;
-                    jCachedDevice.Warn = oCfgData.warn;
-                    jCachedDevice.Watch = oCfgData.watch;
+                    jCachedDevice.DeviceName = oCfgDevice.devicename;
+                    jChangedDevice.DeviceName = oCfgDevice.devicename;
+                    jCachedDevice.Warn = oCfgDevice.warn;
+                    jCachedDevice.Watch = oCfgDevice.watch;
                 }
                 // get device from changed device list
                 that.log.silly(fctName + ', maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === ' + oFbDevice.MACAddress + ') || (item.IPAddress && item.IPAddress === ' + oFbDevice.IPAddress + '))  && item.ts >= ' + ((new Date()).setHours(0, 0, 0, 0)) + ' && item.Action == ' + (oFbDevice.Active == '1' ? 'active' : 'inactive') + ');})');
@@ -264,7 +270,12 @@ async function createDeviceStatusLists(that, aFbDevices) {
                 jChangedDevice.HostName = oFbDevice.HostName;
                 jChangedDevice.HostName_lc = (jChangedDeviceLast ? (jChangedDeviceLast.HostName != '' && jChangedDeviceLast.HostName != oFbDevice.HostName ? (new Date()).getTime() : jChangedDeviceLast.HostName_lc) : 0);
                 jChangedDevice.Count = (jChangedDeviceLast ? jChangedDeviceLast.Count : 0);
-                if (oFbDevice.Active == "0") { // inactive
+                if (oFbDevice.Active == "0") {
+                    // inactive
+                    if (oCfgDevice && oCfgDevice.warn && jCachedDevice.Active) {
+                        // warn if device goes off
+                        that.log.warn('device "' + oCfgDevice.devicename + '" goes off');
+                    }
                     jCachedDevice.Inactive_lc = (jCachedDevice.Active != false ? (new Date()).getTime() : jCachedDevice.Inactive_lc);
                     bActiveChanged = (jCachedDevice.Active != false ? true : bActiveChanged);
                     jCachedDevice.Active = false;

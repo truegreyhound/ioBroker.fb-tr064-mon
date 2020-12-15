@@ -54,6 +54,7 @@ exports.idDeviceList_CachedDevices_JSON = exports.dppDevices + 'deviceList_cache
 exports.idDeviceList_View_JSON = exports.dppDevices + 'deviceList_view_JSON';
 exports.idDeviceList_View_JSON_Count = exports.dppDevices + 'deviceList_view_JSON_count';
 exports.idDeviceList_View_Name = exports.dppDevices + 'deviceList_view_name';
+exports.idDeviceList_ActiveChanged = exports.dppDevices + 'deviceList_active_changed'; // active, hostname or ip changed
 exports.idDeviceList_IPChanged = exports.dppDevices + 'deviceList_ip_changed'; // IP
 exports.idDeviceList_OwnerChanged = exports.dppDevices + 'deviceList_owner_changed'; // owner
 exports.idDeviceList_WarnChanged = exports.dppDevices + 'deviceList_warn_changed'; // warn

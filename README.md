@@ -240,6 +240,11 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.1
+* (greyhound) fix suported function detection
+* (greyhound) fix type conversations
+* (greyhound) new state deviceList_active_changed (changed active, hostname, ip), used as subscription for update control data points
+
 ### 0.4.0 fix type conversations
 
 ### 0.3.9 json list generation redesigned

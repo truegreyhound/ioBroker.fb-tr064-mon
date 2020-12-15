@@ -161,6 +161,7 @@ export const idDeviceList_View_JSON = dppDevices + 'deviceList_view_JSON';
 export const idDeviceList_View_JSON_Count = dppDevices + 'deviceList_view_JSON_count';
 export const idDeviceList_View_Name = dppDevices + 'deviceList_view_name';
 
+export const idDeviceList_ActiveChanged = dppDevices + 'deviceList_active_changed';	// active, hostname or ip changed
 export const idDeviceList_IPChanged = dppDevices + 'deviceList_ip_changed';			// IP
 export const idDeviceList_OwnerChanged = dppDevices + 'deviceList_owner_changed';	// owner
 export const idDeviceList_WarnChanged = dppDevices + 'deviceList_warn_changed';		// warn

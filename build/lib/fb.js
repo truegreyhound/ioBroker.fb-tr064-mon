@@ -141,7 +141,7 @@ class Fb {
         }
     } // checkServicesAsync()
     async chkServices(that) {
-        let bFctState = false;
+        let bFctState = true;
         const fctName = 'chkServices';
         that.log.debug(fctName + ' started');
         try {
@@ -162,8 +162,43 @@ class Fb {
             that.setStateAsync(c.idFritzBoxVersion, sFB_version);
             that.setStateChangedAsync(c.idFritzBoxName, sFB_name, true);
             that.name = sFB_name;
-            // wenn version unterschiedlich, dann neu einlesen
-            if (dpvSFFB_version != sFB_version) {
+            // read from adapter states
+            that.log.debug(fctName + ', getStatesAsync: ' + c.dppFB_Info_SupportedFunctions + '*');
+            // getStatesAsync(pattern: string, options?: unknown): Promise<CallbackReturnTypeOf<GetStatesCallback>>;
+            // type GetStatesCallback = (err: string | null, states: Record<string, State>) => void;
+            await that.getStatesAsync(c.dppFB_Info_SupportedFunctions + '*')
+                .catch((err) => {
+                that.log.error(fctName + ', error: ' + JSON.stringify(err));
+                return false;
+            })
+                .then(async (idSupportedFunctions) => {
+                if (!idSupportedFunctions) {
+                    that.log.error(fctName + ', error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
+                    return false;
+                }
+                else {
+                    // gather states that need to be read
+                    that.log.debug(fctName + ', idSupportedFunctions: ' + JSON.stringify(idSupportedFunctions));
+                    // {"fb-tr064-mon.0.info.supportedFunctions.X_AVM_DE_GetHostListPath":{"val":false,"ack":true,"ts":1607976322842,"q":0,"from":"system.adapter.fb-tr064-mon.0","user":"system.user.admin","lc":1607976322842},"fb-tr064-mon.0.info.supportedFunctions.GetSpecificHostEntry":{"val":false,"ack":true,"ts":1607976322857,"q":0,"from":"system.adapter.fb-tr064-mon.0","user":"system.user.admin","lc":1607976322857},"fb-tr064-mon.0.info.supportedFunctions.X_AVM_DE_GetSpecificHostEntryByIP":{"val":false,"ack":true,"ts":1607976322858,"q":0,"from":"system.adapter.fb-tr064-mon.0","user":"system.user.admin","lc":1607976322858},"fb-tr064-mon.0.info.supportedFunctions.GetSecurityPort":{"val":false,"ack":true,"ts":1607976322919,"q":0,"from":"system.adapter.fb-tr064-mon.0","user":"system.user.admin","lc":1607976322919}}
+                    for (let idState in idSupportedFunctions) {
+                        that.log.debug(fctName + ', idState: ' + JSON.stringify(idState));
+                        const idnState = idState.substr(idState.lastIndexOf('.') + 1);
+                        // check has properties and value
+                        if (!idSupportedFunctions.hasOwnProperty(idState) || idSupportedFunctions[idState] === null) {
+                            continue;
+                        }
+                        if (idSupportedFunctions[idState].val && idSupportedFunctions[idState].val === true) {
+                            c.supportedFunctions.push(idnState);
+                        }
+                        else {
+                            bFctState = false;
+                        }
+                    }
+                    that.log.debug(fctName + ', check SupportedFunctions finished with: ' + bFctState);
+                }
+            });
+            // wenn version unterschiedlich oder adapter states FALSE, dann neu einlesen
+            if (dpvSFFB_version != sFB_version || !bFctState) {
                 // check if the functions are supported by avm
                 let ajServices = [];
                 ajServices.push(JSON.stringify({ 'serviceName': c.X_AVM_DE_GetHostListPath, 'id': 'X_AVM_DE_GetHostListPath' }));
@@ -235,38 +270,6 @@ class Fb {
                 // update version information  
                 that.setStateChangedAsync(c.idSupportedFunctions_FritzBoxVersion, sFB_version, true);
                 bFctState = true;
-            }
-            else {
-                // read from adapter states
-                that.log.debug(fctName + ', getStatesAsync: ' + c.dppFB_Info_SupportedFunctions + '*');
-                // getStatesAsync(pattern: string, options?: unknown): Promise<CallbackReturnTypeOf<GetStatesCallback>>;
-                // type GetStatesCallback = (err: string | null, states: Record<string, State>) => void;
-                await that.getStatesAsync(c.dppFB_Info_SupportedFunctions + '*')
-                    .catch((err) => {
-                    that.log.error(fctName + ', error: ' + JSON.stringify(err));
-                    return false;
-                })
-                    .then(async (idSupportedFunctions) => {
-                    if (!idSupportedFunctions) {
-                        that.log.error(fctName + ', error on getStates for "' + c.dppFB_Info_SupportedFunctions + '*"');
-                        return false;
-                    }
-                    else {
-                        // gather states that need to be read
-                        that.log.debug(fctName + ', idSupportedFunctions: ' + JSON.stringify(idSupportedFunctions));
-                        for (let idState in idSupportedFunctions) {
-                            that.log.debug(fctName + ', idState: ' + JSON.stringify(idState));
-                            const idnState = idState.substr(idState.lastIndexOf('.') + 1);
-                            // check has properties and value
-                            if (!idSupportedFunctions.hasOwnProperty(idState) || idSupportedFunctions[idState] === null) {
-                                continue;
-                            }
-                            if (idSupportedFunctions[idState].val)
-                                c.supportedFunctions.push(idnState);
-                        }
-                        bFctState = true;
-                    }
-                });
             }
         }
         catch (error) {

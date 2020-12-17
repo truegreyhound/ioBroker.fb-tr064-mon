@@ -3,6 +3,9 @@
         "name": "fb-tr064-mon",
         "version": "0.4.2",
         "news": {
+            "0.4.3": {
+                "en": "code reorganisation and optimization"
+            },
             "0.4.2": {
                 "en": "fix device goes off warning"
             },
@@ -11,39 +14,6 @@
             },
             "0.4.0": {
                 "en": "fix type conversations"
-            },
-            "0.3.9": {
-                "en": "json list generation redesigned"
-            },
-            "0.3.8": {
-                "en": "renamed from fb-tr-064 to fb-tr064-mon"
-            },
-            "0.3.7": {
-                "en": "add daily device change list to monitore changes, doesn't want to work yet"
-            },
-            "0.3.6": {
-                "en": "add new and change flag in device table, so if clear which device is new or changed (hostname, ip)"
-            },
-            "0.3.5": {
-                "en": "removing renamed old devices, fix configuration page"
-            },
-            "0.3.4": {
-                "en": "small fixes"
-            },
-            "0.3.3": {
-                "en": "first public release on github"
-            },
-            "0.1.0": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
             }
         },
         "title": "Fritzbox TR-064 mon",

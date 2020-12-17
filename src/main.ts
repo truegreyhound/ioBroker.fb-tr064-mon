@@ -13,12 +13,16 @@
 	The API and Login with username and password should be changed and need some changes in the assigned tools ( adapters, scripts.. ).
 */
 
-//!P!#3 instance-objects, updateDevices: hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + oCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
+//!P!#1 ggf. eine Option für changed devices list, ob jeden Tag neu angefangen werden soll, derzeit wird nur bei Änderung geschrieben
 
-/*!P!#4 instance-objects, updateDevices
+//!P!#3 updateCfgDevices: hier müsste ein Mechanismus rein, der diesen Meldungstype nach n Meldungen für den Tag abschaltet; that.log.warn('device "' + jCfgDevice.devicename + '" without MAC address; IP: "' + oDeviceData.IPAddress + '"');
+
+/*!P!#4 updateCfgDevices
 	Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
 	nach Durchlauf alle DPs in Liste löschen
 */
+
+// !P!#6 updateCfgDevices, remove old device object, ggf. Option, ob das passieren soll
 
 /* !P!
 Wenn ein oder alle supported Functions auf false, dann Fehlermeldung und Adapter beenden, ggf. mit Hinweis, die Fritz!Box neu zu starten
@@ -67,6 +71,7 @@ c)	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
+
 
 // Load your modules here, e.g.:
 // import * as fs from 'fs';
@@ -141,25 +146,25 @@ async function getDeviceList(that: any, cfg: any, Fb: mFb.Fb): Promise<any> {
 	createDeviceStatusLists(that: any, aDevices: any, bInitial?: boolean)
 	that		- adapter context
 	aDevices	- array with devices from the Fritz!Box
-	bInitial	- ignore (empty) device configuration from adapter config page
 
-	liest die
+	liest die ...
 
 */
 async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 	const fctName: string = 'createDeviceStatusLists';
 
-	let bInitial: boolean = false;			// true, if no item in config.devicesList
+	//!P!let bInitial: boolean = false;			// true, if no item in config.devicesList
 	let bInitialCache: boolean = false;		// true, if no item in maCachedDevices
 
-	that.log.debug(fctName + ' started, bInitial: ' + bInitial);
+	//!P!that.log.debug(fctName + ' started, bInitial: ' + bInitial);
+	that.log.debug(fctName + ' started, aFbDevices: ' + JSON.stringify(aFbDevices));
 
 	try {
 		//!PI! sonst ist aAllConfiguredDevices eine Referenz auf that.config.devicesList und splice verändert damit auch den Inhalt von that.config.devicesList
 		let aAllConfiguredDevices: c.IDevice[] = JSON.parse(JSON.stringify(that.config.devicesList));
 
-		that.log.silly(fctName + ', config.devicesList: ' + JSON.stringify((<c.IDeviceList>that.config.devicesList)));
-		that.log.debug(fctName + ', config.devicesList.length: ' + that.config.devicesList.length);
+		that.log.silly(fctName + ', config.devicesList (' + that.config.devicesList.length + '): ' + JSON.stringify((that.config.devicesList)));
+		that.log.debug(fctName + ', maCachedDevices (' + maCachedDevices.length + '): ' + JSON.stringify((maCachedDevices)));
 
 		let bActiveChanged: boolean = false;
 
@@ -170,13 +175,13 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 		that.setStateChangedAsync(c.idDeviceList_WarnChanged, false);
 		that.setStateChangedAsync(c.idDeviceList_WatchChanged, false);
 
-		bInitial = (!that.config.devicesList || that.config.devicesList.length == 0);		// noch nicht im Adapter aufgerufen/gespeichert
-		that.log.debug(fctName + ', bInitial: ' + bInitial);
+		//!P!bInitial = (!that.config.devicesList || that.config.devicesList.length == 0);		// noch nicht im Adapter aufgerufen/gespeichert
+		//!P!that.log.debug(fctName + ', bInitial: ' + bInitial);
 
 		bInitialCache = (!maCachedDevices || maCachedDevices.length == 0);
 		that.log.debug(fctName + ', bInitialCache: ' + bInitialCache);
 
-		that.log.silly(fctName + ', on start; maChangedDevices: ' + JSON.stringify(maChangedDevices));
+		that.log.silly(fctName + ', maChangedDevices: ' + JSON.stringify(maChangedDevices));
 		that.log.silly(fctName + ', fbIP: ' + JSON.stringify(that.config.fbIP));
 
 		const jCachedDummyDevice: c.ICachedDevice[] = [{
@@ -196,36 +201,51 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 			Speed: 0,
 			ts: (new Date()).getTime(),
 			Warn: false,
-			Watch: false
+			Watch: false,
+			new: false,
+			changed: false
 		}];
 
+		// set 'remove' for all cached devices
+		maCachedDevices.forEach((jDevice: c.ICachedDevice) => {jDevice.State = c.CachedDevice_State.removed});
+
 		// map - Methode wendet auf jedes Element des Arrays die bereitgestellte Funktion an und gibt das Ergebnis in einem neuen Array zurück.
-		// d. h., dass hier manipulierte Element oFbDevice wird hier zum neuen Element in aDevices
-		aFbDevices.map((oFbDevice: c.IFbDevice) => {
-			that.log.debug(fctName + ' > oFbDevice: ' + JSON.stringify(oFbDevice));
+		// d. h., dass hier manipulierte Element jFbDevice wird hier zum neuen Element in aDevices
+		aFbDevices.map((jFbDevice: c.IFbDevice) => {
+			that.log.debug(fctName + ' > jFbDevice: ' + JSON.stringify(jFbDevice));
 			// {"Index":"65","IPAddress":"192.168.200.146","MACAddress":"C8:3C:85:63:DC:83","Active":"1","HostName":"iFranks","InterfaceType":"802.11","X_AVM-DE_Port":"0","X_AVM-DE_Speed":"144","X_AVM-DE_UpdateAvailable":"0","X_AVM-DE_UpdateSuccessful":"unknown","X_AVM-DE_InfoURL":"","X_AVM-DE_Model":"","X_AVM-DE_URL":"","X_AVM-DE_Guest":"0"};
 
 			let bDeviceNew: boolean = false;
 
-			if(oFbDevice.IPAddress == that.config.fbIP) {
+			if(jFbDevice.IPAddress == that.config.fbIP) {
 				// fb
-				that.setStateChangedAsync(c.idFritzBoxIP, oFbDevice.IPAddress);
-				that.setStateChangedAsync(c.idFritzBoxMAC, oFbDevice.MACAddress);
+				that.setStateChangedAsync(c.idFritzBoxIP, jFbDevice.IPAddress);
+				that.setStateChangedAsync(c.idFritzBoxMAC, jFbDevice.MACAddress);
 			} else {
 				// get configured parameter for device like macaddress, watch, warn, ...
 				// [{"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","new":false,"changed":false,"ownername":"","interfacetype":"","warn":false,"watch":false},{"devicename": . . .
-				const oCfgDevice: c.IDevice = <c.IDevice>that.config.devicesList.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === oFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === oFbDevice.IPAddress));});
-				that.log.debug(fctName + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
+				let jCfgDevice: c.IDevice = <c.IDevice>that.config.devicesList.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === jFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === jFbDevice.IPAddress));});
+				that.log.debug(fctName + ', jCfgDevice: ' + JSON.stringify(jCfgDevice));
 
 				// get device from adapter cache
-				let jCachedDevice: c.ICachedDevice = <c.ICachedDevice>maCachedDevices.find((item: c.ICachedDevice) => { return ((item.MACAddress && item.MACAddress === oFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === oFbDevice.IPAddress));});
-				console.log(fctName + ',  jCachedDevice: ' + JSON.stringify(jCachedDevice));
+				let jCachedDevice: c.ICachedDevice = <c.ICachedDevice>maCachedDevices.find((item: c.ICachedDevice) => { return ((item.MACAddress && item.MACAddress === jFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === jFbDevice.IPAddress));});
+				that.log.debug(fctName + ', jCachedDevice: ' + JSON.stringify(jCachedDevice));
 			
+				// get device from changed device list
+				//!P!#1 ggf. eine Option für changed devices list, ob jeden Tag neu angefangen werden soll, derzeit wird nur bei Änderung geschrieben
+				//!P!#1that.log.silly(fctName + ', maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === ' + jFbDevice.MACAddress + ') || (item.IPAddress && item.IPAddress === ' + jFbDevice.IPAddress + ')) && item.ts >= ' + ((new Date()).setHours(0, 0, 0, 0)) + ' && item.Action == ' + (jFbDevice.Active == '1' ? 'active' : 'inactive') + ');})');
+				//!P!#1let jChangedDeviceLast: c.IChangedDevice | undefined = <c.IChangedDevice | undefined>maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === jFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === jFbDevice.IPAddress)) && item.ts >= (new Date()).setHours(0, 0, 0, 0) && item.Action == (jFbDevice.Active == '1' ? 'active' : 'inactive'));});
+				that.log.silly(fctName + ', maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === ' + jFbDevice.MACAddress + ') || (item.IPAddress && item.IPAddress === ' + jFbDevice.IPAddress + ')) && item.Action == ' + (jFbDevice.Active == '1' ? 'active' : 'inactive') + ');})');
+				let jChangedDeviceLast: c.IChangedDevice | undefined = <c.IChangedDevice | undefined>maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === jFbDevice.MACAddress) || 
+						(item.IPAddress && item.IPAddress === jFbDevice.IPAddress)) && item.Action == (jFbDevice.Active == '1' ? 'active' : 'inactive'));});
+				// JSON.parse(JSON.stringify( - make copy, no reference
+				if (jChangedDeviceLast) jChangedDeviceLast = JSON.parse(JSON.stringify(jChangedDeviceLast));
+				that.log.debug(fctName + ', jChangedDeviceLast: ' + JSON.stringify(jChangedDeviceLast));
+
+				// reset or create device for cache
 				if (jCachedDevice) {
 					// reset status values
 					jCachedDevice.State = c.CachedDevice_State.removed;			// Vorbelegung, aller durchlaufenen haben später new oder updated
-					jCachedDevice.Warn = false;
-					jCachedDevice.Watch = false;
 				} else {
 					// new device
 					bDeviceNew = true;
@@ -247,10 +267,13 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 						Speed: 0,
 						ts: (new Date()).getTime(),
 						Warn: false,
-						Watch: false
+						Watch: false,
+						new: (bInitialCache ? false : true),
+						changed: false
 					}
 				}
 
+				// create item for daily changes log
 				let jChangedDevice: c.IChangedDevice = {
 					DeviceName: '',
 					Active: false,
@@ -267,64 +290,68 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 					Speed: 0,
 					ts: 0,
 					Count: 0,
-					Action: ''
+					Action: (bDeviceNew && !bInitialCache ? 'new ' : '')
 				}
 
-				if(!oCfgDevice) {
+				// check adapter config item exist
+				if(!jCfgDevice) {
 					// new device without adapter config
-					jCachedDevice.DeviceName = oFbDevice.HostName;
-					jChangedDevice.DeviceName = oFbDevice.HostName;
-				} else {
-					jCachedDevice.DeviceName = oCfgDevice.devicename;
-					jChangedDevice.DeviceName = oCfgDevice.devicename;
+					jCachedDevice.DeviceName = jFbDevice.HostName;
+					jCachedDevice.new = true;
+					jCachedDevice.Warn = false;
+					jCachedDevice.Watch = false;
 
-					jCachedDevice.Warn = oCfgDevice.warn;
-					jCachedDevice.Watch = oCfgDevice.watch;
+					jChangedDevice.DeviceName = jFbDevice.HostName;
+				} else {
+					jCachedDevice.DeviceName = jCfgDevice.devicename;
+					jCachedDevice.Warn = jCfgDevice.warn;
+					jCachedDevice.Watch = jCfgDevice.watch;
+
+					jChangedDevice.DeviceName = jCfgDevice.devicename;
 				}
 
 
-				// get device from changed device list
-				that.log.silly(fctName + ', maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === ' + oFbDevice.MACAddress + ') || (item.IPAddress && item.IPAddress === ' + oFbDevice.IPAddress + '))  && item.ts >= ' + ((new Date()).setHours(0, 0, 0, 0)) + ' && item.Action == ' + (oFbDevice.Active  == '1' ? 'active' : 'inactive') + ');})');
-				const jChangedDeviceLast: c.IChangedDevice | undefined = <c.IChangedDevice | undefined>maChangedDevices.find((item: c.IChangedDevice) => { return (((item.MACAddress && item.MACAddress === oFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === oFbDevice.IPAddress)) && item.ts >= (new Date()).setHours(0, 0, 0, 0) && item.Action == (oFbDevice.Active  == '1' ? 'active' : 'inactive'));});
-				that.log.debug(fctName + ', jChangedDeviceLast: ' + JSON.stringify(jChangedDeviceLast));
-
-//!P!				// known device in adapter config, remove from known list
-				const nIdxCD = aAllConfiguredDevices.findIndex((item: c.IDevice) => ((item.macaddress && item.macaddress === oFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === oFbDevice.IPAddress)))
-				that.log.silly(fctName + ', aAllConfiguredDevices.findIndex: ' + nIdxCD);
+				// known device in adapter config, remove from known list
+				//!P! würde auch mit filter und != gehen, aber was ist teurer??
+				const nIdxCD = aAllConfiguredDevices.findIndex((item: c.IDevice) => ((item.macaddress && item.macaddress === jFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === jFbDevice.IPAddress)))
+				that.log.silly(fctName + ', aAllConfiguredDevices.findIndex: ' + nIdxCD + '; item: ' + JSON.stringify(aAllConfiguredDevices[nIdxCD]));
 
 				if (nIdxCD >= 0) {
 					aAllConfiguredDevices.splice(nIdxCD, 1);
+
+					that.log.silly(fctName + ', aAllConfiguredDevices after splice: ' + JSON.stringify(aAllConfiguredDevices));
 				} else {
 					that.log.error(fctName + ', item in aAllConfiguredDevices not found! Parameter error?');
 				}
 		
 				// update cached device
 				// state State to non, if ip address and hostname unchanged
-				jCachedDevice.State = (jCachedDevice.State != c.CachedDevice_State.new && jCachedDevice.IPAddress == oFbDevice.IPAddress && jCachedDevice.HostName == oFbDevice.HostName ? c.CachedDevice_State.non : c.CachedDevice_State.changed);
+				jCachedDevice.State = (jCachedDevice.State != c.CachedDevice_State.new && jCachedDevice.State != c.CachedDevice_State.removed && jCachedDevice.IPAddress == jFbDevice.IPAddress && jCachedDevice.HostName == jFbDevice.HostName ? c.CachedDevice_State.non : c.CachedDevice_State.changed);
+				if (jCachedDevice.State == c.CachedDevice_State.changed) jCachedDevice.changed = true;
 
-				jCachedDevice.IPAddress_lc = (jCachedDevice.IPAddress != '' && jCachedDevice.IPAddress != oFbDevice.IPAddress ? (new Date()).getTime() : jCachedDevice.IPAddress_lc);
-				jCachedDevice.IPAddress = oFbDevice.IPAddress;
-				jCachedDevice.MACAddress = oFbDevice.MACAddress;
+				jCachedDevice.IPAddress_lc = (jCachedDevice.IPAddress != '' && jCachedDevice.IPAddress != jFbDevice.IPAddress ? (new Date()).getTime() : jCachedDevice.IPAddress_lc);
+				jCachedDevice.IPAddress = jFbDevice.IPAddress;
+				jCachedDevice.MACAddress = jFbDevice.MACAddress;
 
-				jCachedDevice.HostName_lc = (jCachedDevice.HostName != '' && jCachedDevice.HostName != oFbDevice.HostName ? (new Date()).getTime() : jCachedDevice.HostName_lc);
-				jCachedDevice.HostName = oFbDevice.HostName;
+				jCachedDevice.HostName_lc = (jCachedDevice.HostName != '' && jCachedDevice.HostName != jFbDevice.HostName ? (new Date()).getTime() : jCachedDevice.HostName_lc);
+				jCachedDevice.HostName = jFbDevice.HostName;
 
 				// update for changed device list
-				jChangedDevice.ts = (jChangedDeviceLast ? jChangedDeviceLast.ts : (new Date()).getTime());
-				jChangedDevice.IPAddress = oFbDevice.IPAddress;
-				jChangedDevice.IPAddress_lc = (jChangedDeviceLast ? (jChangedDeviceLast.IPAddress != '' && jChangedDeviceLast.IPAddress != oFbDevice.IPAddress ? (new Date()).getTime() : jChangedDeviceLast.IPAddress_lc) : 0);
-				jChangedDevice.MACAddress = oFbDevice.MACAddress;
+				jChangedDevice.ts = (new Date()).getTime();
+				jChangedDevice.IPAddress = jFbDevice.IPAddress;
+				jChangedDevice.IPAddress_lc = jCachedDevice.IPAddress_lc;
+				jChangedDevice.MACAddress = jFbDevice.MACAddress;
 
-				jChangedDevice.HostName = oFbDevice.HostName;
-				jChangedDevice.HostName_lc = (jChangedDeviceLast ? (jChangedDeviceLast.HostName != '' && jChangedDeviceLast.HostName != oFbDevice.HostName ? (new Date()).getTime() : jChangedDeviceLast.HostName_lc) : 0);
+				jChangedDevice.HostName = jFbDevice.HostName;
+				jChangedDevice.HostName_lc = jCachedDevice.HostName_lc;
 				jChangedDevice.Count = (jChangedDeviceLast ? jChangedDeviceLast.Count : 0);
 
 
-				if (oFbDevice.Active == "0") {
+				if (jFbDevice.Active == "0") {
 					// inactive
-					if (oCfgDevice && oCfgDevice.warn && jCachedDevice.Active) {
+					if (jCfgDevice && jCfgDevice.warn && jCachedDevice.Active) {
 						// warn if device goes off
-						that.log.warn('device "' + oCfgDevice.devicename + '" goes off');
+						that.log.warn('device "' + jCfgDevice.devicename + '" goes off');
 					}
 
 					jCachedDevice.Inactive_lc = (jCachedDevice.Active != false ? (new Date()).getTime() : jCachedDevice.Inactive_lc);
@@ -332,46 +359,57 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 					jCachedDevice.Active = false;
 
 					jChangedDevice.Active = false;
-					jChangedDevice.Inactive_lc = (jChangedDeviceLast ? (jChangedDeviceLast.Active != false ? (new Date()).getTime() : jChangedDeviceLast.Inactive_lc) : (new Date()).getTime());
+					jChangedDevice.Active_lc = jCachedDevice.Active_lc;
+					jChangedDevice.Inactive_lc = jCachedDevice.Inactive_lc;
 					jChangedDevice.Action = jChangedDevice.Action + 'inactive';
 				} else {
 					// device active
 					jCachedDevice.Active_lc = (jCachedDevice.Active != true ? (new Date()).getTime() : jCachedDevice.Active_lc);
 					bActiveChanged = (jCachedDevice.Active != true ? true : bActiveChanged);
 					jCachedDevice.Active = true;
+					
+					jCachedDevice.Interfacetype = jFbDevice.InterfaceType;
+					if (jFbDevice.X_AVM_DE_Port != '') jCachedDevice.Port = parseInt(jFbDevice.X_AVM_DE_Port);
+					if (jFbDevice.X_AVM_DE_Speed != '') jCachedDevice.Speed = parseInt(jFbDevice.X_AVM_DE_Speed);
+					jCachedDevice.Guest = (jFbDevice.X_AVM_DE_Guest != '' ? (jFbDevice.X_AVM_DE_Guest == '1') : false);
 
+					// update changelog device
 					jChangedDevice.Active = true;
-					jChangedDevice.Active_lc = (jChangedDeviceLast ? (jChangedDeviceLast.Active != true ? (new Date()).getTime() : jChangedDeviceLast.Active_lc) : (new Date()).getTime());
+					jChangedDevice.Active_lc = jCachedDevice.Active_lc;
+					jChangedDevice.Inactive_lc = jCachedDevice.Inactive_lc;
 					jChangedDevice.Action = jChangedDevice.Action + 'active';
 
-					jCachedDevice.Interfacetype = oFbDevice.InterfaceType;
-					if (oFbDevice.X_AVM_DE_Port != '') jCachedDevice.Port = parseInt(oFbDevice.X_AVM_DE_Port);
-					if (oFbDevice.X_AVM_DE_Speed != '') jCachedDevice.Speed = parseInt(oFbDevice.X_AVM_DE_Speed);
-					jCachedDevice.Guest = (oFbDevice.X_AVM_DE_Guest != '' ? (oFbDevice.X_AVM_DE_Guest == '1') : false);
-
-					jChangedDevice.Interfacetype = oFbDevice.InterfaceType;
-					jChangedDevice.Port = (oFbDevice.X_AVM_DE_Port != '' ? parseInt(oFbDevice.X_AVM_DE_Port) : (jChangedDeviceLast ? jChangedDeviceLast.Port : 0));
-					jChangedDevice.Speed = ((oFbDevice.X_AVM_DE_Speed != '' && (!that.config.ignoreSpeed || !jChangedDeviceLast)) ? parseInt(oFbDevice.X_AVM_DE_Speed) : (jChangedDeviceLast ? jChangedDeviceLast.Speed : 0));
-					jChangedDevice.Guest = (oFbDevice.X_AVM_DE_Guest != '' ? (oFbDevice.X_AVM_DE_Guest == '1') : (jChangedDeviceLast ? jChangedDeviceLast.Guest : false));
+					jChangedDevice.Interfacetype = jFbDevice.InterfaceType;
+					jChangedDevice.Port = jCachedDevice.Port;
+					jChangedDevice.Speed =jCachedDevice.Speed;
+					jChangedDevice.Guest = jCachedDevice.Guest;
 
 				}
 
-				that.log.debug(fctName + ', jChangedDevice: ' + JSON.stringify(jChangedDevice) + ', jChangedDeviceLast: ' + (jChangedDeviceLast));
+				// check has device changed
+				that.log.debug(fctName + ', jChangedDevice: ' + JSON.stringify(jChangedDevice));
+				that.log.silly(fctName + ', jChangedDeviceLast: ' + JSON.stringify(jChangedDeviceLast));
 				if (jChangedDeviceLast) {
-					if (JSON.stringify(jChangedDevice) != JSON.stringify(jChangedDeviceLast)) {
+					//!P!if (JSON.stringify(jChangedDevice) != JSON.stringify(jChangedDeviceLast)) {
+					if (jChangedDevice.Active != jChangedDeviceLast.Active || jChangedDevice.Active_lc != jChangedDeviceLast.Active_lc || jChangedDevice.Inactive_lc != jChangedDeviceLast.Inactive_lc || 
+								jChangedDevice.DeviceName != jChangedDeviceLast.DeviceName || jChangedDevice.Guest != jChangedDeviceLast.Guest || jChangedDevice.HostName != jChangedDeviceLast.HostName || 
+								jChangedDevice.HostName_lc != jChangedDeviceLast.HostName_lc || jChangedDevice.IPAddress != jChangedDeviceLast.IPAddress || jChangedDevice.IPAddress_lc != jChangedDeviceLast.IPAddress_lc || 
+								jChangedDevice.Interfacetype != jChangedDeviceLast.Interfacetype || jChangedDevice.MACAddress != jChangedDeviceLast.MACAddress || jChangedDevice.Port != jChangedDeviceLast.Port ||
+								jChangedDevice.Action != jChangedDeviceLast.Action || (!that.config.ignoreSpeed && jChangedDevice.Speed != jChangedDeviceLast.Speed)) {
+						
 						bActiveChanged = true;
+						
 						jChangedDevice.Count++;
-						jChangedDevice.ts = (new Date()).getTime();
 						// update speed, other property is different (if that.config.ignoreSpeed == true)
-						jChangedDevice.Speed = ((oFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(oFbDevice.X_AVM_DE_Speed) : (jChangedDeviceLast ? jChangedDeviceLast.Speed : 0));
+						jChangedDevice.Speed = ((jFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(jFbDevice.X_AVM_DE_Speed) : (jChangedDeviceLast ? jChangedDeviceLast.Speed : 0));
 	
 						//!P! die Frage ist, sollten die Daten in der vorhandenen Zeile aktualisiert werden, ggf. nur bei active oder gelöscht und die neue Werte an den Anfang geschoben werden?
 
 						// replace item
 						const nL: number = maChangedDevices.length;
 
-						that.log.silly(fctName + ', maChangedDevices.findIndex((item: any) => (((item.macaddress && item.macaddress === ' + oFbDevice.MACAddress + ') || (item.ipaddress && item.ipaddress === ' + oFbDevice.IPAddress + ')) && item.ts >= ' + (new Date()).setHours(0, 0, 0, 0) + ' && item.Action == ' + (oFbDevice.Active == '1' ? 'active' : 'inactive') + '))');
-						const nIdx: number = maChangedDevices.findIndex((item: any) => (((item.MACAddress && item.MACAddress === oFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === oFbDevice.IPAddress)) && item.ts >= (new Date()).setHours(0, 0, 0, 0) && item.Action == (oFbDevice.Active == '1' ? 'active' : 'inactive')));
+						that.log.silly(fctName + ', maChangedDevices.findIndex((item: any) => (((item.macaddress && item.macaddress === ' + jFbDevice.MACAddress + ') || (item.ipaddress && item.ipaddress === ' + jFbDevice.IPAddress + ')) && item.ts >= ' + (new Date()).setHours(0, 0, 0, 0) + ' && item.Action == ' + (jFbDevice.Active == '1' ? 'active' : 'inactive') + '))');
+						const nIdx: number = maChangedDevices.findIndex((item: any) => (((item.MACAddress && item.MACAddress === jFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === jFbDevice.IPAddress)) && item.ts >= (new Date()).setHours(0, 0, 0, 0) && item.Action == (jFbDevice.Active == '1' ? 'active' : 'inactive')));
 						that.log.silly(fctName + ', maChangedDevices.findIndex: ' + nIdx);
 
 						if (nIdx >= 0) {
@@ -402,28 +440,25 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 			that.log.warn(fctName + ', following in adapter configured devices removed from Fritz!Box network list: ' + JSON.stringify(aAllConfiguredDevices));
 
 			let bDeviceRemoved: boolean = false;
-			aAllConfiguredDevices.map((oCfgDevice: c.IDevice) => {
-				that.log.silly(fctName + ', removed device; oCfgDevice: ' + JSON.stringify(oCfgDevice));
+			aAllConfiguredDevices.map((jCfgDevice: c.IDevice) => {
+				that.log.silly(fctName + ', removed device; jCfgDevice: ' + JSON.stringify(jCfgDevice));
 				bDeviceRemoved = true;
-				
-				let sDevice: string = '{"Active": "' + false + '", "IPAddress": "' + oCfgDevice.ipaddress + '", "MACAddress": "' + oCfgDevice.macaddress + '", "HostName": "' + oCfgDevice.devicename + '"}';
-				that.log.silly(fctName + ', removed device; sDevice: ' + sDevice);
 
-				if (oCfgDevice.warn) that.log.warn(fctName + ', following device removed from Fritz!Box network list: ' + JSON.stringify(sDevice));
+				if (jCfgDevice.warn) that.log.warn(fctName + ', following device removed from Fritz!Box network list: ' + JSON.stringify(jCfgDevice));
 
 				//!P! ggf, muss hostname der cfgTable im Adapter hinzugefügt werden, wenn das so Probleme macht!?
 				let jChangedDevice: c.IChangedDevice = {
-					DeviceName: oCfgDevice.devicename,
+					DeviceName: jCfgDevice.devicename,
 					Active: false,
 					Active_lc: 0,
 					Inactive_lc: 0,
-					HostName: oCfgDevice.devicename,
+					HostName: jCfgDevice.devicename,
 					HostName_lc: 0,
-					IPAddress: oCfgDevice.ipaddress,
+					IPAddress: jCfgDevice.ipaddress,
 					IPAddress_lc:  0,
-					MACAddress: oCfgDevice.macaddress,
-					Interfacetype: oCfgDevice.interfacetype,
-					Guest: (oCfgDevice.guest ? oCfgDevice.guest : false),
+					MACAddress: jCfgDevice.macaddress,
+					Interfacetype: jCfgDevice.interfacetype,
+					Guest: (jCfgDevice.guest ? jCfgDevice.guest : false),
 					Port: 0,
 					Speed: 0,
 					ts: (new Date()).getTime(),
@@ -434,7 +469,7 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 				maChangedDevices.unshift(jChangedDevice);
 
 				// remove from that.config.devicesList
-				const nIdxDL: number = that.config.devicesList.findIndex((item: any) => ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress)));
+				const nIdxDL: number = that.config.devicesList.findIndex((item: any) => ((item.macaddress && item.macaddress === jCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === jCfgDevice.ipaddress)));
 				that.log.silly(fctName + ', maChangedDevices.findIndex: ' + nIdxDL);
 
 				if (nIdxDL >= 0) {
@@ -443,7 +478,7 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 					that.log.error(fctName + ', item in config.devicesList not found! Parameter error?');
 				}
 			});
-			if (bDeviceRemoved) that.log.debug(fctName + ', maChangedDevices with removed devices: ' + JSON.stringify(maChangedDevices));
+			if (bDeviceRemoved) that.log.debug(fctName + ', maChangedDevices after remove devices: ' + JSON.stringify(maChangedDevices));
 
 			that.log.debug(fctName + ', check for removed device in adapter config finished');
 		}
@@ -495,12 +530,12 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.State == c.CachedDevice_State.new));
 		that.log.debug(fctName + ', aFiltered (device.State == c.CachedDevice_State.new): ' + JSON.stringify(aFiltered));
 		await that.setStateChangedAsync(c.idDeviceList_NewAddedDevices_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
-		that.log.warn(fctName + ', follwing new device(s) from Fritz!Box network list detected: ' + JSON.stringify(aFiltered));
+		if (aFiltered.length > 0) that.log.warn(fctName + ', follwing new device(s) from Fritz!Box network list detected: ' + JSON.stringify(aFiltered));
 
 		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.State == c.CachedDevice_State.removed));
 		that.log.debug(fctName + ', aFiltered (device.State == c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
 		await that.setStateChangedAsync(c.idDeviceList_RemovedDevices_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
-		that.log.warn(fctName + ', follwing device(s) removed on Fritz!Box network list: ' + JSON.stringify(aFiltered));
+		if (aFiltered.length > 0) that.log.warn(fctName + ', follwing device(s) removed on Fritz!Box network list: ' + JSON.stringify(aFiltered));
 
 		// check / prepare size daily changes list
 		const dpoDeviceList_DailyChanges_maxCount: ioBroker.State | null | undefined = await that.getStateAsync(c.idDeviceList_DailyChanges_maxCount);
@@ -522,7 +557,8 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 		// remove from cached devices list
 		maCachedDevices = maCachedDevices.filter((device: c.ICachedDevice) => (device.State != c.CachedDevice_State.removed));
 		await that.setStateChangedAsync(c.idDeviceList_CachedDevices_JSON, JSON.stringify(maCachedDevices));
-		
+		that.log.silly(fctName + ', maCachedDevices on finishing: ' + JSON.stringify(maCachedDevices));
+
 		await that.setStateChangedAsync(c.idDeviceList_IPChanged, (that.config.devicesListIPChanged) ? that.config.devicesListIPChanged : false);
 		await that.setStateChangedAsync(c.idDeviceList_OwnerChanged, (that.config.devicesListOwnerChanged) ? that.config.devicesListOwnerChanged : false);
 		await that.setStateChangedAsync(c.idDeviceList_WarnChanged, (that.config.devicesListWarnChanged) ? that.config.devicesListWarnChanged : false);
@@ -838,30 +874,34 @@ class FbTr064 extends utils.Adapter {
 
 			switch (iddp) {
 				case c.idDeviceList_ActiveChanged:
-					fctNameId = 'subscription "' + c.idDeviceList_ActiveChanged + '" changed';
+					if (state.val) {		// execute only if val == TRUE
+						fctNameId = 'subscription "' + c.idDeviceList_ActiveChanged + '" changed';
 
-					// devicesList aus config holen, und für alle WATCH-devices ggf. DPs anlegen und Status aktualisieren.
-					//const aAllActiveDevices: JSON[] = JSON.parse(state.val);
-					//this.log.debug(fctNameId + ', aAllActiveDevices.length: ' + ((aAllActiveDevices) ? aAllActiveDevices.length : 'undefined'));
+						// devicesList aus config holen, und für alle WATCH-devices ggf. DPs anlegen und Status aktualisieren.
+						//const aAllActiveDevices: JSON[] = JSON.parse(state.val);
+						//this.log.debug(fctNameId + ', aAllActiveDevices.length: ' + ((aAllActiveDevices) ? aAllActiveDevices.length : 'undefined'));
 
-					const aCfgDevicesList = this.config.devicesList;
-					this.log.debug(fctNameId + ', aCfgDevicesList.length: ' + ((aCfgDevicesList) ? aCfgDevicesList.length : 'undefined'));
+						const aCfgDevicesList = this.config.devicesList;		// no copy, is a reference
+						this.log.debug(fctNameId + ', aCfgDevicesList.length: ' + ((aCfgDevicesList) ? aCfgDevicesList.length : 'undefined'));
 
-// "IPAddress": "' + oFbDevice.IPAddress + '", "MACAddress": "' + oFbDevice.MACAddress + '", "HostName": "' + oFbDevice.HostName + '"'
-// "InterfaceType": "' + oFbDevice.InterfaceType + '", "Port": "' + oFbDevice['X_AVM-DE_Port'] + '", "Speed": "' + oFbDevice['X_AVM-DE_Speed'] + '"}';
+	// "IPAddress": "' + jFbDevice.IPAddress + '", "MACAddress": "' + jFbDevice.MACAddress + '", "HostName": "' + jFbDevice.HostName + '"'
+	// "InterfaceType": "' + jFbDevice.InterfaceType + '", "Port": "' + jFbDevice['X_AVM-DE_Port'] + '", "Speed": "' + jFbDevice['X_AVM-DE_Speed'] + '"}';
 
-					if((aCfgDevicesList) && aCfgDevicesList.length > 0) {
-						mFbObj.updateDevices(this, aCfgDevicesList, maCachedDevices);
+						if((aCfgDevicesList) && aCfgDevicesList.length > 0) {
+							updateCfgDevices(this);
 
-						this.log.debug(fctNameId + ', config.devicesListOld: ' + JSON.stringify(this.config.devicesListOld));
+							this.log.debug(fctNameId + ', config.devicesListOld: ' + JSON.stringify(this.config.devicesListOld));
+						}
+
+						this.log.debug(fctNameId + ' finished');
 					}
-
-					this.log.debug(fctNameId + ' finished');
 
 					break;
 				case c.idDeviceList_View_Name:
-					fctNameId = 'subscription "' + c.idDeviceList_View_Name + '" changed';
+					fctNameId = 'subscription "' + c.idDeviceList_View_Name + '" changed to "' + state.val + '"';
 					this.log.debug(fctNameId + ', to : ' + state.val);
+
+					if (state.val == '') return;
 
 					let idJsonState: string = '';
 
@@ -1119,26 +1159,26 @@ class FbTr064 extends utils.Adapter {
 						that.log.debug(fctNameId + ', aCfgDevicesList: ' + JSON.stringify(aCfgDevicesList));
 						this.log.debug(fctNameId + ', maAllDevices.length: ' + ((maCachedDevices) ? maCachedDevices.length : 'undefined'));
 
-						maCachedDevices.map((oFbDevice: c.ICachedDevice) => {
-							that.log.debug(fctNameId + ' oFbDevice: ' + JSON.stringify(oFbDevice));
+						maCachedDevices.map((jFbDevice: c.ICachedDevice) => {
+							that.log.debug(fctNameId + ' jFbDevice: ' + JSON.stringify(jFbDevice));
 							// device active
 							// aCfgDevicesList[0] = {devicename: "Acer-NB", macaddress: "00:1C:26:7D:02:D6", ipaddress: "192.168.200.157", ownername: "", interfacetype: "", …}
-							const aCfgDevicesListItem: any = ((aCfgDevicesList) && aCfgDevicesList.length >= 0) ? getJsonArrayItem(aCfgDevicesList, oFbDevice.MACAddress, oFbDevice.IPAddress) : undefined;
+							const aCfgDevicesListItem: c.IDevice = (((aCfgDevicesList) && aCfgDevicesList.length >= 0) ? aCfgDevicesList.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === jFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === jFbDevice.IPAddress));}) : undefined);
 							//!P! --> bei Aktualisierung AdapterCfg InterfaceType nur überschreiben, wenn device.InterfaceType != leer
 							that.log.debug(fctNameId + ', aCfgDevicesListItem: ' + JSON.stringify(aCfgDevicesListItem));
 
 							aNewCfgDevicesList.devices.push ({
-								devicename: ((aCfgDevicesListItem) ? aCfgDevicesListItem.devicename : oFbDevice.HostName),
-								ipaddress: oFbDevice.IPAddress,
-								macaddress: oFbDevice.MACAddress,
+								devicename: ((aCfgDevicesListItem) ? aCfgDevicesListItem.devicename : jFbDevice.HostName),
+								ipaddress: jFbDevice.IPAddress,
+								macaddress: jFbDevice.MACAddress,
 								ownername: ((aCfgDevicesListItem) ? aCfgDevicesListItem.ownername : ''),
-								interfacetype: (oFbDevice.Interfacetype != '') ? oFbDevice.Interfacetype : ((aCfgDevicesListItem) ? aCfgDevicesListItem.interfacetype : ''),
-								active: oFbDevice.Active,
+								interfacetype: (jFbDevice.Interfacetype != '') ? jFbDevice.Interfacetype : ((aCfgDevicesListItem) ? aCfgDevicesListItem.interfacetype : ''),
+								active: jFbDevice.Active,
 								new: ((aCfgDevicesListItem) ? aCfgDevicesListItem.new : false),
 								changed: ((aCfgDevicesListItem) ? aCfgDevicesListItem.changed : false),
 								warn: ((aCfgDevicesListItem) ? aCfgDevicesListItem.warn : false),
 								watch: ((aCfgDevicesListItem) ? aCfgDevicesListItem.watch : false),
-								guest: oFbDevice.Guest
+								guest: jFbDevice.Guest
 							} as c.IDevice);
 						});
 						this.log.debug(fctNameId + ', aNewCfgDevicesList: ' + JSON.stringify(aNewCfgDevicesList));
@@ -1164,11 +1204,9 @@ class FbTr064 extends utils.Adapter {
 						if (mTimerStartUpdate) clearTimeout(mTimerStartUpdate);
 						mTimerStartUpdate = null;
 			
-						// reset change flags
-						for(let i = 0; i < this.config.devicesList.length; i++) {
-							this.config.devicesList[i].new = false;
-							this.config.devicesList[i].changed = false;
-						}
+						// reset new and change flags
+						this.config.devicesList.forEach((jDevice: c.IDevice) => {jDevice.new = false; jDevice.changed = false;});
+						maCachedDevices.forEach((jDevice: c.ICachedDevice) => {jDevice.new = false; jDevice.changed = false;});
 
 						// process changes in configuration form
 						this.updateDevicesStatus();
@@ -1193,10 +1231,125 @@ class FbTr064 extends utils.Adapter {
 } // onMessage()
 
 
-function getJsonArrayItem(aJson: JSON[], sMAC: string, sIP: string): JSON | undefined {
+/*
+	aktualisiert die device list für die Konfigurationsansicht
 
-	return <JSON>aJson.find((item: any) => { return ((item.macaddress && item.macaddress === sMAC) || (item.ipaddress && item.ipaddress === sIP));} );
-}
+*/
+async function updateCfgDevices(that: any) {
+	const fctNameId: string = 'updateCfgDevices';
+	that.log.debug(fctNameId + ' started');
+	that.log.debug(fctNameId + ', maCachedDevices: ' + JSON.stringify(maCachedDevices));
+
+	const aCfgDevicesList: c.IDevice[] = that.config.devicesList;		// no copy, is a reference
+	that.log.silly(fctNameId + ', aCfgDevicesList: ' + JSON.stringify(aCfgDevicesList));
+
+	/*!P!#4
+	Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
+	nach Durchlauf alle DPs in Liste löschen
+	*/
+	let bDataChangedIP: boolean = false;
+	let bDataChangedOwner: boolean = false;
+	let bDataChangedWarn: boolean = false;
+	let bDataChangedWatch: boolean = false;
+
+	let aCfgDevicesListOld: c.IDevice[] = (that.config.devicesListOld ? JSON.parse(JSON.stringify(that.config.devicesListOld)) : null);			// list from last save of confiuration on admin site
+	that.log.silly(fctNameId + ', aCfgDevicesListOld: ' + JSON.stringify(aCfgDevicesListOld));
+
+	if (!aCfgDevicesListOld) aCfgDevicesListOld = JSON.parse(JSON.stringify(aCfgDevicesList));
+	that.log.silly(fctNameId + ', aCfgDevicesListOld2: ' + JSON.stringify(aCfgDevicesListOld));
+	
+	if (aCfgDevicesListOld && aCfgDevicesListOld.length > 0) {
+		aCfgDevicesList.map( async (jCfgDevice: c.IDevice) => {
+			that.log.debug(fctNameId + ', jCfgDevice: ' + JSON.stringify(jCfgDevice));
+			// {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
+
+			const jCachedDevice: c.ICachedDevice = <c.ICachedDevice>maCachedDevices.find(function (item: c.ICachedDevice) { return ((item.MACAddress && item.MACAddress === jCfgDevice.macaddress) || (item.IPAddress && item.IPAddress === jCfgDevice.ipaddress));});
+			that.log.debug(fctNameId + ', jCachedDevice: ' + JSON.stringify(jCachedDevice));
+
+			let jCfgDeviceOld: c.IDevice = <c.IDevice>aCfgDevicesListOld.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === jCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === jCfgDevice.ipaddress));});
+			if (jCfgDeviceOld) jCfgDeviceOld = JSON.parse(JSON.stringify(jCfgDeviceOld));
+			that.log.debug(fctNameId + ', jCfgDeviceOld: ' + JSON.stringify(jCfgDeviceOld));
+			
+
+			if (jCfgDevice.watch) {
+				// device watched, create datapoints / update value
+
+				mFbObj.check_set_deviceData(that, jCfgDevice, jCachedDevice);
+			}
+
+			if (jCachedDevice) {
+				if (jCachedDevice.IPAddress != jCfgDevice.ipaddress) {
+					// IP has changed
+					if(that.config.warningDestination == 'log')
+					{
+						that.log.warn('IP-address for device "' + jCfgDevice.devicename + '" changed (old: "' + jCfgDevice.ipaddress + '"; new: "' + jCachedDevice.IPAddress + '"; MAC: "' + jCachedDevice.MACAddress + '"');
+					}
+
+					if(that.config.warningDestination == 'telegram.0')
+					{
+						that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + jCfgDevice.devicename + '" changed (old: "' + jCfgDevice.ipaddress + '"; new: "' + jCachedDevice.IPAddress + '"; MAC: "' + jCachedDevice.MACAddress + '"');
+					}
+
+					// update aCfgDevicesList
+/*!P!					if (idx >= 0) {
+						aCfgDevicesList[idx].ipaddress = jCachedDevice.IPAddress;
+						aCfgDevicesList[idx].changed = true;
+						bDataChangedIP = true;
+					} */
+					jCfgDevice.ipaddress = jCachedDevice.IPAddress;
+					jCfgDevice.changed = true;
+				}
+
+				if (jCfgDeviceOld) {
+					if (jCfgDeviceOld.devicename != jCfgDevice.devicename) {		// device name has changed (bases on MAC / IP) --> remove old data
+						// check device exist
+						await that.getObjectAsync(c.dppDevices + jCfgDeviceOld.devicename)
+						.then( async (oDevice: any) => {
+							if (oDevice) {
+								that.log.debug(fctNameId + ', getObjectAsync; node "' + c.dppDevices + jCfgDeviceOld.devicename + '" for device exist');
+						
+								// save old dates
+								await mFbObj.copy_oldDeviceData(that, jCfgDeviceOld, jCfgDevice);
+
+								// remove old device object
+								// !P!#6 remove old device object, ggf. Option, ob das passieren soll
+								mFbObj.delete_oldDeviceData(that, jCfgDeviceOld);
+							} else {
+								that.log.debug(fctNameId + ', getObjectAsync; old node "' + c.dppDevices + jCfgDeviceOld.devicename + '" for device is already removed');
+							}
+						});
+					}
+					if (jCfgDeviceOld.ownername != jCfgDevice.ownername) {
+						// owner has changed
+						bDataChangedOwner = true;
+					}
+					if (jCfgDeviceOld.warn != jCfgDevice.warn) {
+						// warn has changed
+						bDataChangedWarn = true;
+					}
+					if (jCfgDeviceOld.watch != jCfgDevice.watch) {
+						// watch has changed
+						bDataChangedWatch = true;
+					}
+				}
+			}
+		});
+	}
+	that.log.silly(fctNameId + ', aCfgDevicesList: ' + JSON.stringify(aCfgDevicesList));
+	that.log.silly(fctNameId + ', that.config.devicesList: ' + JSON.stringify(that.config.devicesList));
+
+	if (bDataChangedIP || bDataChangedOwner || bDataChangedWarn || bDataChangedWatch) that.config.devicesList = aCfgDevicesList;
+	that.config.devicesListIPChanged = bDataChangedIP;
+	that.config.devicesListOwnerChanged = bDataChangedOwner;
+	that.config.devicesListWarnChanged = bDataChangedWarn;
+	that.config.devicesListWatchChanged = bDataChangedWatch;
+
+	// JSON.parse(JSON.stringify(..., make copy no reference
+	that.config.devicesListOld = JSON.parse(JSON.stringify(that.config.devicesList));
+	that.log.debug(fctNameId + ', config.devicesListOld: ' + JSON.stringify(that.config.devicesListOld));
+
+	that.log.debug(fctNameId + ' finished');
+} // updateDevices()
 
 
 function decrypt(sKey: string, sValue: any) {

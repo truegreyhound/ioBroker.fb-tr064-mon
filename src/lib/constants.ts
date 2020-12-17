@@ -60,7 +60,6 @@ export interface IDevice {
 	ipaddress: string;
 	macaddress: string;
 	ownername: string;
-	active: boolean;
 	interfacetype: string;
 	new: boolean;
 	changed: boolean;
@@ -101,6 +100,8 @@ export interface ICachedDevice {
 	ts: number;
 	Warn: boolean;
 	Watch: boolean;
+	new: boolean;
+	changed: boolean;
 }
 
 export interface IChangedDevice {

@@ -231,201 +231,82 @@ export async function createInstanceRootObjects(that: any): Promise<void> {
 } // createInstanceRootObjects()
 
 
-/*
-	aktualisiert die device list für die Konfigurationsansicht
-
-	aCfgDevicesList - aktuelle config-deviceList
-	aAllDevices		- aktuelle List von der Fritz!Box
-*/
-//export async function updateDevices(that: any, aCfgDevicesList: JSON[], aAllActiveDevices: JSON[]) {
-export async function updateDevices(that: any, aCfgDevicesList: c.IDevice[], aCachedDevices: c.ICachedDevice[]) {
-	const fctNameId: string = 'io.updateDevices';
-	that.log.debug(fctNameId + ' started');
-	that.log.debug(fctNameId + ', aAllActiveDevices: ' + JSON.stringify(aCachedDevices));
-
-	/*!P!#4
-	Wenn neue Option "delete unwatched" aktiv, dann  über Selector DP-Liste erstellen und beim Durchlauf verarbeitete löschen
-	nach Durchlauf alle DPs in Liste löschen
-	*/
-	let bDataChangedIP: boolean = false;
-	let bDataChangedOwner: boolean = false;
-	let bDataChangedWarn: boolean = false;
-	let bDataChangedWatch: boolean = false;
-
-	let aCfgDevicesListOld: c.IDevice[] = (that.config.devicesListOld ? JSON.parse(JSON.stringify(that.config.devicesListOld)) : null);			// list from last save of confiuration on admin site
-	that.log.silly(fctNameId + ', aCfgDevicesListOld: ' + JSON.stringify(aCfgDevicesListOld));
-
-	if (!aCfgDevicesListOld) aCfgDevicesListOld = JSON.parse(JSON.stringify(aCfgDevicesList));
-	that.log.silly(fctNameId + ', aCfgDevicesListOld2: ' + JSON.stringify(aCfgDevicesListOld));
-	
-	if (aCfgDevicesListOld && aCfgDevicesListOld.length > 0) {
-		aCfgDevicesList.map( async (oCfgDevice: c.IDevice) => {
-			that.log.debug(fctNameId + ', oCfgDevice: ' + JSON.stringify(oCfgDevice));
-			// {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
-
-			const oCachedDevice: c.ICachedDevice = <c.ICachedDevice>aCachedDevices.find(function (item: c.ICachedDevice) { return ((item.MACAddress && item.MACAddress === oCfgDevice.macaddress) || (item.IPAddress && item.IPAddress === oCfgDevice.ipaddress));});
-			that.log.debug(fctNameId + ', oCachedDevice: ' + JSON.stringify(oCachedDevice));
-
-			const oCfgDeviceOld: c.IDevice = <c.IDevice>aCfgDevicesListOld.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress));});
-			that.log.debug(fctNameId + ', oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
-			
-
-			if (oCfgDevice.watch) {
-				// device watched, create datapoints / update value
-
-				check_set_deviceData(that, oCfgDevice, oCachedDevice);
-			}
-
-			const idx: number = aCfgDevicesList.indexOf(oCfgDevice);
-			aCfgDevicesList[idx].new = false;
-			aCfgDevicesList[idx].changed = false;
-
-			if (oCachedDevice) {
-				if (oCachedDevice.IPAddress != oCfgDevice.ipaddress) {
-					// IP has changed
-					if(that.config.warningDestination == 'log')
-					{
-						that.log.warn('IP-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oCachedDevice.IPAddress + '"; MAC: "' + oCachedDevice.MACAddress + '"');
-					}
-
-					if(that.config.warningDestination == 'telegram.0')
-					{
-						that.sendTo('telegram.0', (new Date(), "JJJJ.MM.TT SS:mm:ss") + ' MAC-address for device "' + oCfgDevice.devicename + '" changed (old: "' + oCfgDevice.ipaddress + '"; new: "' + oCachedDevice.IPAddress + '"; MAC: "' + oCachedDevice.MACAddress + '"');
-					}
-
-					// update aCfgDevicesList
-					if (idx >= 0) {
-						aCfgDevicesList[idx].ipaddress = oCachedDevice.IPAddress;
-						aCfgDevicesList[idx].changed = true;
-						bDataChangedIP = true;
-					}
-				}
-
-				if (oCfgDeviceOld) {
-					if (oCfgDeviceOld.devicename != oCfgDevice.devicename) {		// device name has changed (bases on MAC / IP) --> remove old data
-						// check device exist
-						await that.getObjectAsync(c.dppDevices + oCfgDeviceOld.devicename)
-						.then( async (oDevice: any) => {
-							if (oDevice) {
-								that.log.debug(fctNameId + ', getObjectAsync; node "' + c.dppDevices + oCfgDeviceOld.devicename + '" for device exist');
-						
-								// save old dates
-								await copy_oldDeviceData(that, oCfgDeviceOld, oCfgDevice);
-
-								// remove old device object
-								// !P! ggf. Option, ob das passieren soll
-								delete_oldDeviceData(that, oCfgDeviceOld);
-							} else {
-								that.log.debug(fctNameId + ', getObjectAsync; old node "' + c.dppDevices + oCfgDeviceOld.devicename + '" for device does`t exist');
-							}
-						});
-					}
-					if (oCfgDeviceOld.ownername != oCfgDevice.ownername) {
-						// owner has changed
-						bDataChangedOwner = true;
-					}
-					if (oCfgDeviceOld.warn != oCfgDevice.warn) {
-						// warn has changed
-						bDataChangedWarn = true;
-					}
-					if (oCfgDeviceOld.watch != oCfgDevice.watch) {
-						// watch has changed
-						bDataChangedWatch = true;
-					}
-				}
-			}
-		});
-	}
-
-	if (bDataChangedIP || bDataChangedOwner || bDataChangedWarn || bDataChangedWatch) that.config.devicesList = aCfgDevicesList;
-	that.config.devicesListIPChanged = bDataChangedIP;
-	that.config.devicesListOwnerChanged = bDataChangedOwner;
-	that.config.devicesListWarnChanged = bDataChangedWarn;
-	that.config.devicesListWatchChanged = bDataChangedWatch;
-
-	that.config.devicesListOld = JSON.parse(JSON.stringify(that.config.devicesList));
-	that.log.debug(fctNameId + ', config.devicesListOld: ' + JSON.stringify(that.config.devicesListOld));
-
-	that.log.debug(fctNameId + ' finished');
-} // updateDevices()
-
-
-async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceData: c.ICachedDevice) {
+export async function check_set_deviceData(that: any, jCfgDevice: c.IDevice, jCachedDevice: c.ICachedDevice) {
 	// check data points exist: active, IP, lastIP, MAC, lastMAC, lastActive, lastInactive
 	// and update there values
 	// Wenn MAC oder IP sich ändert, Message, wenn enabled
 
 	const fctNameId: string = 'io.check_set_deviceData';
-	that.log.debug(fctNameId + ' started for oCfgDevice: ' + JSON.stringify(oCfgDevice));
-	that.log.debug(fctNameId + ' started for oDeviceData: ' + JSON.stringify(oDeviceData));
-	// oCfgDevice: {"devicename":"iFranks","macaddress":"C8:3C:85:63:DC:83","ipaddress":"192.168.200.146","new":false,"changed":false,"ownername":"Frank","interfacetype":"802.11","warn":false,"watch":true}
-	// oDeviceData: {"State":"changed","DeviceName":"iFranks","Active":true,"Active_lc":1607980907210,"Inactive_lc":0,"HostName":"iFranks","HostName_lc":0,"IPAddress":"192.168.200.146","IPAddress_lc":0,"MACAddress":"C8:3C:85:63:DC:83","Interfacetype":"802.11","Guest":false,"Port":0,"Speed":351,"ts":1607980907209,"Warn":false,"Watch":true}
+	that.log.debug(fctNameId + ' started for jCfgDevice: ' + JSON.stringify(jCfgDevice));
+	that.log.debug(fctNameId + ' started for jCachedDevice: ' + JSON.stringify(jCachedDevice));
+	// jCfgDevice: {"devicename":"iFranks","macaddress":"C8:3C:85:63:DC:83","ipaddress":"192.168.200.146","new":false,"changed":false,"ownername":"Frank","interfacetype":"802.11","warn":false,"watch":true}
+	// jCachedDevice: {"State":"changed","DeviceName":"iFranks","Active":true,"Active_lc":1607980907210,"Inactive_lc":0,"HostName":"iFranks","HostName_lc":0,"IPAddress":"192.168.200.146","IPAddress_lc":0,"MACAddress":"C8:3C:85:63:DC:83","Interfacetype":"802.11","Guest":false,"Port":0,"Speed":351,"ts":1607980907209,"Warn":false,"Watch":true}
 
 	try {
-		that.log.debug(fctNameId + ', create device "' + c.dppDevices + oCfgDevice.devicename + '"')
+		that.log.debug(fctNameId + ', create device "' + c.dppDevices + jCfgDevice.devicename + '"')
 		// create device node
 		that.setObjectNotExistsAsync(
-			c.dppDevices + oCfgDevice.devicename,
+			c.dppDevices + jCfgDevice.devicename,
 			{
 				type: 'device',
 				common: {
-					name: oCfgDevice.devicename,
+					name: jCfgDevice.devicename,
 					role: 'info',
 				},
 				native: {},
 			}
 		);
 	}  catch(err) {
-		that.log.error(fctNameId + ', error on create device for id "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
+		that.log.error(fctNameId + ', error on create device for id "' + c.dppDevices + jCfgDevice.devicename + '": ' + err.message)
 	}
 	
 	try {
-		let idState: string = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceActive;
-		let idStateValue: any = ((oDeviceData) && (oDeviceData.Active) ? true : false);
+		let idState: string = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceActive;
+		let idStateValue: any = ((jCachedDevice) && (jCachedDevice.Active) ? true : false);
 		const dtCurrent: number = (new Date()).getTime();
-		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue + '"; oDeviceData: ' + JSON.stringify(oDeviceData));
+		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue + '"; jCachedDevice: ' + JSON.stringify(jCachedDevice));
 
 		let bValueChanged: boolean = await setStateAsyncEx(that, idState, idStateValue, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceActive,
+			name: jCfgDevice.devicename + '.' + c.idnDeviceActive,
 			type: 'boolean',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceActive,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceActive,
 		}, false, 200);		// set value with delay
 		if (bValueChanged) that.log.warn(fctNameId + ', id "' + idState + '"; set value: "' + idStateValue + '"');
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 		await setStateAsyncEx(that, idState, 0, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceLastActive,
+			name: jCfgDevice.devicename + '.' + c.idnDeviceLastActive,
 			type: 'number',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastActive,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceLastActive,
 		}, true);	// set "0" only, if state new created
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
 		await setStateAsyncEx(that, idState, 0, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceLastInactive,
+			name: jCfgDevice.devicename + '.' + c.idnDeviceLastInactive,
 			type: 'number',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastInactive,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceLastInactive,
 		}, true);	// set "0" only, if state new created
 
 		if (bValueChanged) {
 			// value has changed
 			if(idStateValue) {
-				idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+				idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 
 				that.setStateAsync(idState, dtCurrent);
 			} else {
-				idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+				idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
 
 				that.setStateAsync(idState, dtCurrent);
 			}
@@ -433,14 +314,14 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 		} else {
 			// wenn der Wert sich nicht geändert hat, muss idnDeviceLastActive | idnDeviceLastInactive > idnDeviceLastInactive | idnDeviceLastActive
 			// wenn nicht, dann gab es eine "Überwachungspause", d. h., diese Werte sollten trotzdem aktualisiert werden
-			await that.getStateAsync(c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive)
+			await that.getStateAsync(c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive)
 			.then(async (oStateLA: any) => {
-				that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive + '):' + JSON.stringify(oStateLA) + '<<<');
+				that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive + '):' + JSON.stringify(oStateLA) + '<<<');
 		
 				if (oStateLA) {
-					await that.getStateAsync(c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive)
+					await that.getStateAsync(c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive)
 					.then((oStateLI: any) => {
-						that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive + '):' + JSON.stringify(oStateLI) + '<<<');
+						that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive + '):' + JSON.stringify(oStateLI) + '<<<');
 				
 						if (oStateLI) {
 							that.log.debug(fctNameId + ', check consistent date active/inactive: ' + oStateLA.val + ' / ' + oStateLI.val);
@@ -455,11 +336,11 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 							if (bValueChanged) {
 								// date to old, update
 								if(idStateValue) {
-									idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+									idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 					
 									that.setStateAsync(idState, dtCurrent);
 								} else {
-									idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+									idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
 					
 									that.setStateAsync(idState, dtCurrent);
 								}
@@ -477,188 +358,188 @@ async function check_set_deviceData(that: any, oCfgDevice: c.IDevice, oDeviceDat
 			});
 		}
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceName;
-		setStateAsyncEx(that, idState, oCfgDevice.devicename, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceName,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceName;
+		setStateAsyncEx(that, idState, jCfgDevice.devicename, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceName,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceName,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceName,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceHostname;
-		setStateAsyncEx(that, idState, ((oDeviceData) ? oDeviceData.HostName : ''), {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceHostname,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceHostname;
+		setStateAsyncEx(that, idState, ((jCachedDevice) ? jCachedDevice.HostName : ''), {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceHostname,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceHostname,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceHostname,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceMAC;
-		setStateAsyncEx(that, idState, ((oDeviceData) ? oDeviceData.MACAddress : oCfgDevice.macaddress), {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceMAC,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceMAC;
+		setStateAsyncEx(that, idState, ((jCachedDevice) ? jCachedDevice.MACAddress : jCfgDevice.macaddress), {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceMAC,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceMAC,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceMAC,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastMAC;
-		setStateAsyncEx(that, idState, oCfgDevice.macaddress, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceLastMAC,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastMAC;
+		setStateAsyncEx(that, idState, jCfgDevice.macaddress, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceLastMAC,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastMAC,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceLastMAC,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceIP;
-		setStateAsyncEx(that, idState, ((oDeviceData) ? oDeviceData.IPAddress : oCfgDevice.ipaddress), {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceIP,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceIP;
+		setStateAsyncEx(that, idState, ((jCachedDevice) ? jCachedDevice.IPAddress : jCfgDevice.ipaddress), {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceIP,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceIP,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceIP,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastIP;
-		idStateValue = oCfgDevice.ipaddress;
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastIP;
+		idStateValue = jCfgDevice.ipaddress;
 		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue);
 		setStateAsyncEx(that, idState, idStateValue, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceLastIP,
+			name: jCfgDevice.devicename + '.' + c.idnDeviceLastIP,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceLastIP,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceLastIP,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceOwner;
-		setStateAsyncEx(that, idState, oCfgDevice.ownername, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceOwner,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceOwner;
+		setStateAsyncEx(that, idState, jCfgDevice.ownername, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceOwner,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceOwner,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceOwner,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType;
-		setStateAsyncEx(that, idState, ((oDeviceData) && oDeviceData.Interfacetype != '' ? oDeviceData.Interfacetype : oCfgDevice.interfacetype), {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceInterfaceType;
+		setStateAsyncEx(that, idState, ((jCachedDevice) && jCachedDevice.Interfacetype != '' ? jCachedDevice.Interfacetype : jCfgDevice.interfacetype), {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceInterfaceType,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceInterfaceType,
 		});
 
 		// '{"IPAddress": "' + oDevice.IPAddress + '", "MACAddress": "' + oDevice.MACAddress + '", "HostName": "' + oDevice.HostName + '"'
 		//  ', "InterfaceType": "' + oDevice.InterfaceType + '", "Port": "' + oDevice['X_AVM-DE_Port'] + '", "Speed": "' + oDevice['X_AVM-DE_Speed'] + '"}';
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbPort;
-		idStateValue = ((oDeviceData) ? oDeviceData.Port : '');
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbPort;
+		idStateValue = ((jCachedDevice) ? jCachedDevice.Port : '');
 		that.log.debug(fctNameId + ', create state "' + idState + '"; set value: "' + idStateValue);
 		setStateAsyncEx(that, idState, idStateValue, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceFbPort,
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbPort,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbPort,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbPort,
 		});
 
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed;
-		setStateAsyncEx(that, idState, ((oDeviceData) && (oDeviceData.Speed)) ? oDeviceData.Speed : 0, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbSpeed;
+		setStateAsyncEx(that, idState, ((jCachedDevice) && (jCachedDevice.Speed)) ? jCachedDevice.Speed : 0, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbSpeed,
 			type: 'string',
 			role: 'info',
 			def: '',
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbSpeed,
 		});
 		
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbGuest;
-		setStateAsyncEx(that, idState, (((oDeviceData) && (oDeviceData.Guest)) ? true : false), {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbGuest;
+		setStateAsyncEx(that, idState, (((jCachedDevice) && (jCachedDevice.Guest)) ? true : false), {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
 			type: 'boolean',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
 		});
 		
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
-		setStateAsyncEx(that, idState, oCfgDevice.warn, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
+		setStateAsyncEx(that, idState, jCfgDevice.warn, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
 			type: 'boolean',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
 		});
 		
-		idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbWatch;
-		setStateAsyncEx(that, idState, oCfgDevice.watch, {
-			name: oCfgDevice.devicename + '.' + c.idnDeviceFbWatch,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWatch;
+		setStateAsyncEx(that, idState, jCfgDevice.watch, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbWatch,
 			type: 'boolean',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: oCfgDevice.devicename + '.' + c.idnDeviceFbWatch,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbWatch,
 		});
 	}  catch(err) {
-		that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
+		that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + jCfgDevice.devicename + '": ' + err.message)
 	}
 
 } // check_set_deviceData()
 
 
-async function copy_oldDeviceData(that: any, oCfgDeviceOld: c.IDevice, oCfgDevice: c.IDevice) {
+export async function copy_oldDeviceData(that: any, jCfgDeviceOld: c.IDevice, jCfgDevice: c.IDevice) {
 	// lastActive, lastInactive übernehmen
 	const fctNameId: string = 'io.copy_oldDeviceData';
-	that.log.debug(fctNameId + ' started for oCfgDeviceOld: ' + JSON.stringify(oCfgDeviceOld));
+	that.log.debug(fctNameId + ' started for jCfgDeviceOld: ' + JSON.stringify(jCfgDeviceOld));
 
-	that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + oCfgDeviceOld.devicename + '.' + c.idnDeviceLastActive + ')');
+	that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + jCfgDeviceOld.devicename + '.' + c.idnDeviceLastActive + ')');
 
-	await that.getStateAsync(c.dppDevices + oCfgDeviceOld.devicename + '.' + c.idnDeviceLastActive)
+	await that.getStateAsync(c.dppDevices + jCfgDeviceOld.devicename + '.' + c.idnDeviceLastActive)
 	.then((oState: any) => {
 		that.log.debug(fctNameId + ', getStateAsyncEx; oState:' + JSON.stringify(oState) + '<<<');
 
 		if (oState) {
-			that.setStateAsync(c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive, oState.val, true);
+			that.setStateAsync(c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive, oState.val, true);
 		} else {
 			that.log.warn(fctNameId + ', getStateAsyncEx: object not found!');
 		}
 	});
 
-	that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + oCfgDeviceOld.devicename + '.' + c.idnDeviceLastInactive + ')');
+	that.log.debug(fctNameId + ', getStateAsyncEx(' + c.dppDevices + jCfgDeviceOld.devicename + '.' + c.idnDeviceLastInactive + ')');
 
-	await that.getStateAsync(c.dppDevices + oCfgDeviceOld.devicename + '.' + c.idnDeviceLastInactive)
+	await that.getStateAsync(c.dppDevices + jCfgDeviceOld.devicename + '.' + c.idnDeviceLastInactive)
 	.then((oState: any) => {
 		that.log.debug(fctNameId + ', getStateAsyncEx; oState:' + JSON.stringify(oState) + '<<<');
 
 		if (oState) {
-			that.setStateAsync(c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive, oState.val, true);
+			that.setStateAsync(c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive, oState.val, true);
 		} else {
 			that.log.warn(fctNameId + ', getStateAsyncEx: object not found!');
 		}
@@ -669,21 +550,21 @@ async function copy_oldDeviceData(that: any, oCfgDeviceOld: c.IDevice, oCfgDevic
 } // copy_oldDeviceData()
 
 
-async function delete_oldDeviceData(that: any, oCfgDevice: c.IDevice) {
+export async function delete_oldDeviceData(that: any, jCfgDevice: c.IDevice) {
 	// remove old objects for XXXX active, IP, lastIP, MAC, lastMAC, lastActive, lastInactive
 
 	const fctNameId: string = 'io.delete_oldDeviceData';
-	that.log.debug(fctNameId + ' started for oCfgDevice: ' + JSON.stringify(oCfgDevice));
-	//oCfgDevice: {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
+	that.log.debug(fctNameId + ' started for jCfgDevice: ' + JSON.stringify(jCfgDevice));
+	//jCfgDevice: {"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","ownername":"","interfacetype":"","active":false,"watch":true}
 	
 /*!PI! deleteDeviceAsync funktioniert nicht, da unter devices zuerst channels gesucht werden	try {
-		that.log.debug(fctNameId + ', delete device "' + c.dppDevices + oCfgDevice.devicename + '"')
+		that.log.debug(fctNameId + ', delete device "' + c.dppDevices + jCfgDevice.devicename + '"')
 		// delete device node
-		that.deleteDeviceAsync(c.dppDevices + oCfgDevice.devicename, (err: Error) => {
-			if (err) that.log.error(fctNameId + ', error on deleting device for id "' + c.dppDevices + oCfgDevice.devicename + '": ' + JSON.stringify(err))
+		that.deleteDeviceAsync(c.dppDevices + jCfgDevice.devicename, (err: Error) => {
+			if (err) that.log.error(fctNameId + ', error on deleting device for id "' + c.dppDevices + jCfgDevice.devicename + '": ' + JSON.stringify(err))
 		});
 	}  catch(err) {
-		that.log.error(fctNameId + ', error on deleting device for id "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
+		that.log.error(fctNameId + ', error on deleting device for id "' + c.dppDevices + jCfgDevice.devicename + '": ' + err.message)
 	}
 */
 
@@ -691,77 +572,77 @@ try {
 
 	//!P! ID aus getObjets des device ermitteln
 
-	let idState: string = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceActive;
+	let idState: string = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceActive;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastActive;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceName;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceName;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceHostname;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceHostname;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceMAC;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceMAC;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastMAC;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastMAC;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceIP;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceIP;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceLastIP;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastIP;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceOwner;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceOwner;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceInterfaceType;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceInterfaceType;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbPort;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbPort;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbSpeed;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbSpeed;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbGuest;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbGuest;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename + '.' + c.idnDeviceFbWatch;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWatch;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + oCfgDevice.devicename;
+	idState = c.dppDevices + jCfgDevice.devicename;
 	that.log.debug(fctNameId + ', delete device "' + idState + '"');
 	that.delObjectAsync(idState);
 
 	// remove from adapter config list
 	
-	const nIdxDL: number = that.config.devicesList.findIndex((item: any) => ((item.macaddress && item.macaddress === oCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === oCfgDevice.ipaddress)));
+	const nIdxDL: number = that.config.devicesList.findIndex((item: any) => ((item.macaddress && item.macaddress === jCfgDevice.macaddress) || (item.ipaddress && item.ipaddress === jCfgDevice.ipaddress)));
 	that.log.silly(fctNameId + ', maChangedDevices.findIndex: ' + nIdxDL);
 
 	if (nIdxDL >= 0) {
@@ -770,7 +651,7 @@ try {
 		that.log.error(fctNameId + ', item in config.devicesList not found! Parameter error?');
 	}
 }  catch(err) {
-	that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + oCfgDevice.devicename + '": ' + err.message)
+	that.log.error(fctNameId + ', error on create state for device "' + c.dppDevices + jCfgDevice.devicename + '": ' + err.message)
 }
 
 	that.log.debug(fctNameId + ' finished');

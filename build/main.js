@@ -483,7 +483,7 @@ async function createDeviceStatusLists(that, aFbDevices) {
         }
         aFiltered = maCachedDevices.filter((device) => (device.State == c.CachedDevice_State.removed));
         that.log.debug(fctName + ', aFiltered (device.State == c.CachedDevice_State.removed); count: ' + aFiltered.length + '; items: ' + JSON.stringify(aFiltered));
-        await that.setStateChangedAsyncEx(c.idDeviceList_RemovedDevices_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
+        await that.setStateChangedAsync(c.idDeviceList_RemovedDevices_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
         /*!P!		await mFbObj.setStateAsyncEx(that, c.idDeviceList_RemovedDevices_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)), {
                     name: 'devices.deviceList_RemovedDevices_JSON',
                     type: 'string',

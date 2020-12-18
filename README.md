@@ -240,6 +240,9 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.5 (2020-12-18)
+* (greyhound) smal function call fix
+
 ### 0.4.4 (2020-12-18)
 * (greyhound) fix add, remove device to change device list
 

@@ -1,8 +1,11 @@
 {
     "common": {
         "name": "fb-tr064-mon",
-        "version": "0.4.4",
+        "version": "0.4.6",
         "news": {
+            "0.4.5": {
+                "en": "smal function call fix"
+            },
             "0.4.4": {
                 "en": "fix add, remove device to change device list"
             },

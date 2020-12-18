@@ -240,6 +240,9 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.4 (2020-12-18)
+* (greyhound) fix add, remove device to change device list
+
 ### 0.4.3 code reorganisation and optimization
 
 ### 0.4.2 fix device goes off warning

@@ -1,11 +1,14 @@
 'use strict';
 
 import util = require('util');
-
 import * as c from './constants';
 
+/*
+	setStateAsyncEx - setzt einen Wert nur, wenn state neu erstellt oder Wert sich geändert hat
+*/
 export async function setStateAsyncEx(that: any, _id: string, _value: any, _common: ioBroker.StateCommon, _setValueOnlyStateCreated: boolean = false, _setValueDelay: number = 0): Promise<boolean>  {
-	that.log.debug('io.setStateAsyncEx started for id "' + _id + '"; value: ' + _value  + '; common: ' + JSON.stringify(_common) + '"; _setValueOnlyStateCreated: ' + _setValueOnlyStateCreated);
+	const fctName: string = 'io.setStateAsyncEx';
+	that.log.debug(fctName + ' started for id "' + _id + '"; value: ' + _value  + '; common: ' + JSON.stringify(_common) + '"; _setValueOnlyStateCreated: ' + _setValueOnlyStateCreated);
 
 	let bValueChanged: boolean = false;
 
@@ -16,7 +19,7 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 			native: {},
 		})
 		.then(async (err: Error, obj: any) => {
-			that.log.debug('io.setStateAsyncEx, setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
+			that.log.debug(fctName + ', setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
 			// obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP"} --> created
 
 			if (err) that.log.error('setStateAsyncEx error: ' + JSON.stringify(err));
@@ -39,25 +42,25 @@ export async function setStateAsyncEx(that: any, _id: string, _value: any, _comm
 				} else {
 					await that.setStateChangedAsync(_id, _value, true)
 					.then((obj:any) => {
-						that.log.debug('io.setStateAsyncEx, setStateChangedAsync, obj:' + JSON.stringify(obj) + '<<<');
+						that.log.debug(fctName + ', setStateChangedAsync, obj:' + JSON.stringify(obj) + '<<<');
 						// obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP","notChanged":true}
 						
 						bValueChanged = !obj.notChanged;
 					});
-					that.log.debug('io.setStateAsyncEx, set "' + _id + '" to "' + _value + '"');
-					that.log.debug('io.setStateAsyncEx finished for id "' + _id + '" with bValueChanged: ' + bValueChanged);
+					that.log.debug(fctName + ', set "' + _id + '" to "' + _value + '"');
+					that.log.debug(fctName + ' finished for id "' + _id + '" with bValueChanged: ' + bValueChanged);
 				}
 			} else {
-				that.log.debug('io.setStateAsyncEx finished without set value for id "' + _id + '"');
+				that.log.debug(fctName + ' finished without set value for id "' + _id + '"');
 			}
 
 			return bValueChanged;
 		})
-		.catch((e: any) => that.log.error('io.setStateAsyncEx, error on "setStateAsyncEx() for id "' + _id + '": ' + e.message));
+		.catch((e: any) => that.log.error(fctName + ', error on "setStateAsyncEx() for id "' + _id + '": ' + e.message));
 
 		//await that.setStateAsync(_id, _value, true);
 	} catch (e) {
-		that.log.error('io.setStateAsyncEx, error on "setStateAsyncEx()" for id "' + _id + '": ' + e.message);
+		that.log.error(fctName + ', error on "setStateAsyncEx()" for id "' + _id + '": ' + e.message);
 
 		return bValueChanged;
 	}

@@ -9,8 +9,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const util = require("util");
 const c = __importStar(require("./constants"));
+/*
+    setStateAsyncEx - setzt einen Wert nur, wenn state neu erstellt oder Wert sich geändert hat
+*/
 async function setStateAsyncEx(that, _id, _value, _common, _setValueOnlyStateCreated = false, _setValueDelay = 0) {
-    that.log.debug('io.setStateAsyncEx started for id "' + _id + '"; value: ' + _value + '; common: ' + JSON.stringify(_common) + '"; _setValueOnlyStateCreated: ' + _setValueOnlyStateCreated);
+    const fctName = 'io.setStateAsyncEx';
+    that.log.debug(fctName + ' started for id "' + _id + '"; value: ' + _value + '; common: ' + JSON.stringify(_common) + '"; _setValueOnlyStateCreated: ' + _setValueOnlyStateCreated);
     let bValueChanged = false;
     try {
         return await that.setObjectNotExistsAsync(_id, {
@@ -19,7 +23,7 @@ async function setStateAsyncEx(that, _id, _value, _common, _setValueOnlyStateCre
             native: {},
         })
             .then(async (err, obj) => {
-            that.log.debug('io.setStateAsyncEx, setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
+            that.log.debug(fctName + ', setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
             // obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP"} --> created
             if (err)
                 that.log.error('setStateAsyncEx error: ' + JSON.stringify(err));
@@ -40,24 +44,24 @@ async function setStateAsyncEx(that, _id, _value, _common, _setValueOnlyStateCre
                 else {
                     await that.setStateChangedAsync(_id, _value, true)
                         .then((obj) => {
-                        that.log.debug('io.setStateAsyncEx, setStateChangedAsync, obj:' + JSON.stringify(obj) + '<<<');
+                        that.log.debug(fctName + ', setStateChangedAsync, obj:' + JSON.stringify(obj) + '<<<');
                         // obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP","notChanged":true}
                         bValueChanged = !obj.notChanged;
                     });
-                    that.log.debug('io.setStateAsyncEx, set "' + _id + '" to "' + _value + '"');
-                    that.log.debug('io.setStateAsyncEx finished for id "' + _id + '" with bValueChanged: ' + bValueChanged);
+                    that.log.debug(fctName + ', set "' + _id + '" to "' + _value + '"');
+                    that.log.debug(fctName + ' finished for id "' + _id + '" with bValueChanged: ' + bValueChanged);
                 }
             }
             else {
-                that.log.debug('io.setStateAsyncEx finished without set value for id "' + _id + '"');
+                that.log.debug(fctName + ' finished without set value for id "' + _id + '"');
             }
             return bValueChanged;
         })
-            .catch((e) => that.log.error('io.setStateAsyncEx, error on "setStateAsyncEx() for id "' + _id + '": ' + e.message));
+            .catch((e) => that.log.error(fctName + ', error on "setStateAsyncEx() for id "' + _id + '": ' + e.message));
         //await that.setStateAsync(_id, _value, true);
     }
     catch (e) {
-        that.log.error('io.setStateAsyncEx, error on "setStateAsyncEx()" for id "' + _id + '": ' + e.message);
+        that.log.error(fctName + ', error on "setStateAsyncEx()" for id "' + _id + '": ' + e.message);
         return bValueChanged;
     }
 } // setStateAsyncEx()

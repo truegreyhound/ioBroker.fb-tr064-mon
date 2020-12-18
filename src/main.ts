@@ -427,6 +427,9 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 						maChangedDevices.unshift(jChangedDevice);
 					}
 				} else {
+					jChangedDevice.Speed = ((jFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(jFbDevice.X_AVM_DE_Speed) : (jChangedDeviceLast ? jChangedDeviceLast.Speed : 0));
+					jChangedDevice.ts = (new Date()).getTime();
+
 					that.log.silly(fctName + ', add jChangedDevice to maChangedDevices ...');
 
 					maChangedDevices.unshift(jChangedDevice);

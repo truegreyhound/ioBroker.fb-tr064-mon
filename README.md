@@ -240,6 +240,9 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.6 (2020-12-18)
+* (greyhound) fix ts, speed for new list items in device change list
+
 ### 0.4.5 (2020-12-18)
 * (greyhound) smal function call fix
 

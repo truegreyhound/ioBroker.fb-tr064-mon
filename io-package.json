@@ -3,6 +3,9 @@
         "name": "fb-tr064-mon",
         "version": "0.4.6",
         "news": {
+            "0.4.6": {
+                "en": "fix ts, speed for new list items in device change list"
+            },
             "0.4.5": {
                 "en": "smal function call fix"
             },

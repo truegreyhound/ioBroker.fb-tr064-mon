@@ -63,7 +63,18 @@ export interface IDevice {
 	interfacetype: string;
 	new: boolean;
 	changed: boolean;
-	warn: boolean;
+	warnOn: boolean;
+	warnOff: boolean;
+	watch: boolean;
+	guest: boolean;
+}
+
+export interface IGuestDevice {
+	devicename: string;
+	macaddress: string;
+	ownername: string;
+	warnOn: boolean;
+	warnOff: boolean;
 	watch: boolean;
 	guest: boolean;
 }
@@ -98,7 +109,9 @@ export interface ICachedDevice {
 	Port: number;
 	Speed: number;
 	ts: number;
-	Warn: boolean;
+	Owner: string;
+	WarnOn: boolean;
+	WarnOff: boolean;
 	Watch: boolean;
 	new: boolean;
 	changed: boolean;
@@ -182,5 +195,6 @@ export const idnDeviceInterfaceType = 'interfacetype';
 export const idnDeviceFbPort = 'port';
 export const idnDeviceFbSpeed = 'speed';
 export const idnDeviceFbGuest = 'guest';
-export const idnDeviceFbWarn = 'warn';
+export const idnDeviceFbWarnOn = 'warnOn';
+export const idnDeviceFbWarnOff = 'warnOff';
 export const idnDeviceFbWatch = 'watch';

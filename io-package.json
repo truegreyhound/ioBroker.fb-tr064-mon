@@ -1,8 +1,14 @@
 {
     "common": {
         "name": "fb-tr064-mon",
-        "version": "0.4.6",
+        "version": "0.4.8",
         "news": {
+            "0.4.8": {
+                "en": "split warn column in warnOn and warnOf, option to enable warning for new network devices"
+            },
+            "0.4.7": {
+                "en": "add configuration page for known guest WLAN devices"
+            },
             "0.4.6": {
                 "en": "fix ts, speed for new list items in device change list"
             },
@@ -80,6 +86,7 @@
         "warningDestination": "",
         "devicesList": [],
         "devicesListOld": [],
+        "warnNewDeviceOnFB": false,
         "devicesListIPChanged": false,
         "devicesListOwnerChanged": false,
         "devicesListWarnChanged": false,

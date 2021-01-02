@@ -23,7 +23,7 @@
 
 			// Create secrect for encrypted password storage
 			var secret;
-			function encrypt(key, value) {
+/*			function encrypt(key, value) {
 				var result = '';
 				for (var i = 0; i < value.length; ++i) {
 					result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
@@ -37,7 +37,7 @@
 				}
 				return result;
 			}
-
+*/
 			function setValue(id, value) {
 				var $value = $('#' + id + '.value');
 				if ($value.attr('type') === 'checkbox') {
@@ -121,6 +121,8 @@
 
 					loadHelper(settings);
 					console.log('load, secret: ' + secret + '<<<');
+
+					values2table('valuesguest', settings.guestdevicesList, onChange);
 
 					$('.value').each(function () {
 						var $key = $(this);
@@ -246,6 +248,9 @@
 				obj.devicesList = table2values('values');
 				console.log('load, obj.devicesList: ' + JSON.stringify(obj.devicesList)); 
 
+				obj.guestdevicesList = table2values('valuesguest');
+				console.log('load, obj.guestdevicesList: ' + JSON.stringify(obj.guestdevicesList)); 
+
 				// save old List
 				obj.devicesListOld = oDLonstart.devicesListOld;
 				oDLonstart.devicesListOld = obj.devicesList;		// prepare for compare if data only save, not save and close
@@ -279,6 +284,7 @@
 					<ul class="tabs">
 						<li class="tab col s3"><a href="#tab-main" class="translate active">Main settings</a></li>
 						<li class="tab col s3"><a href="#tab-devices" class="translate">device settings</a></li>
+						<li class="tab col s3"><a href="#tab-guestdevices" class="translate">WLAN guest device settings</a></li>
 					</ul>
 				</div>
 
@@ -326,6 +332,10 @@
 							<span class="tooltiptext translate">Here you can select an distination for warnings on changed IP.</span>
 						</div>
                         <div class="input-field col s3 m6 l3">
+                            <input id="warnNewDeviceOnFB" type="checkbox" class="value filled-in" />
+                            <span class="translate" for="warnNewDeviceOnFB">warn if new device on Fritz!Box added</span>
+                        </div>
+                        <div class="input-field col s3 m6 l3">
                             <input id="ignoreSpeed" type="checkbox" class="value filled-in" />
                             <span class="translate" for="ignoreSpeed">ignore speed in daily changes list</span>
                         </div>
@@ -338,8 +348,8 @@
 					<div class="row">
 						<div class="col s12 m8 l8">
 							<img src="fb-tr064-mon.png" class="logo" />
-							<p class="translate">Here you can overwrite the network name, set an owner (used for external presence detection), enable warning while IP has changed and enable watching for an devices.</p>
-							<p class="translate">For each enabled device for watching any datapoints under devices will be created and periodical updated. The owner 'guest' is reserved for guest devices!</p>
+							<p class="translate">Here you can overwrite the network name, set an owner (used for external presence detection), enable warning while IP has changed or the device goes offline and enable watching for an devices.</p>
+							<p class="translate">For each enabled device for watching any datapoints under the device name will be created and periodical updated. The owner 'guest' is reserved for guest devices!</p>
 						</div>
 					</div>
 					<!-- End of row -->
@@ -364,7 +374,8 @@
 											<th data-name="changed" style="width: 5%;" data-type="checkbox" class="translate" for="changed">changed</th>
 											<th data-name="ownername" style="width: 30%;" class="translate" for="ownername">owner name</th>
 											<th data-name="interfacetype" style="width: 25%;" class="translate" for="interfacetype">interface</th>
-											<th data-name="warn" style="width: 10%;" data-type="checkbox" class="translate">warn</th>
+											<th data-name="warnOn" style="width: 10%;" data-type="checkbox" class="translate">warnOn</th>
+											<th data-name="warnOff" style="width: 10%;" data-type="checkbox" class="translate">warnOff</th>
 											<th data-name="watch" style="width: 10%;" data-type="checkbox" class="translate">watch</th>
 											<!-- <th data-buttons="delete" style="width: 5%"></th> -->
 										</tr>
@@ -376,7 +387,48 @@
 				</div>
 				<!-- End of tab devices -->
 
-				<div id="dialog-search" class="modal modal-fixed-footer grey lighten-2"></div>
+				<div id="tab-guestdevices" class="col s12 page">
+					<div class="row">
+						<div class="col s12 m8 l8">
+							<img src="fb-tr064-mon.png" class="logo" />
+							<p class="translate">Here you can overwrite the network name, set an owner (used for external presence detection), enable warning while IP has changed or the device goes offline or online and enable watching for an devices.</p>
+							<p class="translate">For each added and enabled device for watching any datapoints under the device name will be created and periodical updated. The owner 'guest' is reserved for guest devices!</p>
+						</div>
+					</div>
+					<!-- End of row -->
+
+					<div id="valuesguest">
+						<div class="row">
+							<div class="col s12">
+<!--								<a class="btn-floating waves-effect waves-light table-button-add" id="addDevice">
+									<i class="material-icons left">add</i><span class="translate">Add device</span>
+								</a> -->
+								<a class="btn-floating waves-effect waves-light table-button-add"><i class="material-icons">add</i></a>
+								<a class="btn waves-effect waves-light modal-trigger translate">Add a device</a>
+								<!-- <a class="btn waves-effect waves-light modal-trigger translate" href="#dialog-search">search devices</a> -->
+							</div>
+						</div>
+						<div class="row">
+							<div class="col s11">
+								<table class="table-values" style="width: 100%;">
+									<thead>
+										<tr>
+											<th data-name="_index" style="width: 5%;" class="center-align translate"></th>
+											<th data-name="devicename" style="width: 25%;" class="translate" for="devicename">device name</th>
+											<th data-name="macaddress" style="width: 25%;" class="translate" for="macaddress">MAC address</th>
+											<th data-name="ownername" style="width: 30%;" class="translate" for="ownername">owner name</th>
+											<th data-name="warnOn" style="width: 10%;" data-type="checkbox" class="translate">warnOn</th>
+											<th data-name="warnOff" style="width: 10%;" data-type="checkbox" class="translate">warnOff</th>
+											<th data-name="watch" style="width: 10%;" data-type="checkbox" class="translate">watch</th>
+											<th data-buttons="delete" style="width: 5%"></th>
+										</tr>
+									</thead>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- End of tab guestdevices -->
 			</div>
 		</div>
 		<!-- End of adapter container -->

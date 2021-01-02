@@ -242,8 +242,8 @@ export async function check_set_deviceData(that: any, jCfgDevice: c.IDevice, jCa
 	const fctNameId: string = 'io.check_set_deviceData';
 	that.log.debug(fctNameId + ' started for jCfgDevice: ' + JSON.stringify(jCfgDevice));
 	that.log.debug(fctNameId + ' started for jCachedDevice: ' + JSON.stringify(jCachedDevice));
-	// jCfgDevice: {"devicename":"iFranks","macaddress":"C8:3C:85:63:DC:83","ipaddress":"192.168.200.146","new":false,"changed":false,"ownername":"Frank","interfacetype":"802.11","warn":false,"watch":true}
-	// jCachedDevice: {"State":"changed","DeviceName":"iFranks","Active":true,"Active_lc":1607980907210,"Inactive_lc":0,"HostName":"iFranks","HostName_lc":0,"IPAddress":"192.168.200.146","IPAddress_lc":0,"MACAddress":"C8:3C:85:63:DC:83","Interfacetype":"802.11","Guest":false,"Port":0,"Speed":351,"ts":1607980907209,"Warn":false,"Watch":true}
+	// jCfgDevice: {"devicename":"iFranks","macaddress":"C8:3C:85:63:DC:83","ipaddress":"192.168.200.146","new":false,"changed":false,"ownername":"Frank","interfacetype":"802.11","warnOn":false,"warnOff":false,"watch":true}
+	// jCachedDevice: {"State":"changed","DeviceName":"iFranks","Active":true,"Active_lc":1607980907210,"Inactive_lc":0,"HostName":"iFranks","HostName_lc":0,"IPAddress":"192.168.200.146","IPAddress_lc":0,"MACAddress":"C8:3C:85:63:DC:83","Interfacetype":"802.11","Guest":false,"Port":0,"Speed":351,"ts":1607980907209,"warnOn":false,"warnOff":false,"Watch":true}
 
 	try {
 		that.log.debug(fctNameId + ', create device "' + c.dppDevices + jCfgDevice.devicename + '"')
@@ -489,15 +489,26 @@ export async function check_set_deviceData(that: any, jCfgDevice: c.IDevice, jCa
 			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbGuest,
 		});
 		
-		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
-		setStateAsyncEx(that, idState, jCfgDevice.warn, {
-			name: jCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOn;
+		setStateAsyncEx(that, idState, jCfgDevice.warnOn, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOn,
 			type: 'boolean',
 			role: 'info',
 			def: false,
 			read: true,
 			write: false,
-			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbWarn,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOn,
+		});
+		
+		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOff;
+		setStateAsyncEx(that, idState, jCfgDevice.warnOff, {
+			name: jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOff,
+			type: 'boolean',
+			role: 'info',
+			def: false,
+			read: true,
+			write: false,
+			desc: jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOff,
 		});
 		
 		idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWatch;
@@ -631,7 +642,11 @@ try {
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 
-	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarn;
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOn;
+	that.log.debug(fctNameId + ', delete state "' + idState + '"');
+	that.delObjectAsync(idState);
+
+	idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceFbWarnOff;
 	that.log.debug(fctNameId + ', delete state "' + idState + '"');
 	that.delObjectAsync(idState);
 

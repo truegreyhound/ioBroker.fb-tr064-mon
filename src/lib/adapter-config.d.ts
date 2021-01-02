@@ -13,6 +13,8 @@ declare global {
 			"warningDestination": "",
 			"devicesList": [],
 			"devicesListOld": [],
+			"guestdevicesList": [],
+			"warnNewDeviceOnFB": false
 			"devicesListIPChanged": false,
 			"devicesListOwnerChanged": false,
 			"devicesListWarnChanged": false,

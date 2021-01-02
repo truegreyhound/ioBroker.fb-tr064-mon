@@ -12,7 +12,25 @@
 	https://avm.de/fritz-labor/frisch-aus-der-entwicklung/bekannte-probleme/
 
 	The API and Login with username and password should be changed and need some changes in the assigned tools ( adapters, scripts.. ).
+
+	>> es scheint "nur" Anmeldung mit User/Password pflicht zu sein
 */
+
+//!P! owner wurde in DP nach Änderung auf CfgSeite nicht aktualisiert!?
+
+/*!P! FB-verhalten mit Gäste-WLAN
+DeviceName			Active	Active_lc			Inactive_lc	HostName	HostName_lc	IPAddress	IPAddress_lc MACAddress	 		Interfacetype	Guest	Port	Speed	ts					Count	Action
+PC-192-168-179-69	true	2020-12-20 20:19:46	- - -	PC-192-168-179-69	- - -	192.168.179.69	- - -	CC:0D:F2:D6:7C:B3					true	0		0	2020-12-20 22:01:11.13	0		removed
+PC-192-168-179-69	true	2020-12-20 20:19:46	- - -	PC-192-168-179-69	- - -	192.168.179.69	- - -	CC:0D:F2:D6:7C:B3					true	0		0	2020-12-20 21:57:45.305	0		active
+
+Karls Handy geht wie erwartet aktiv, beim "Verschwinden" wird es aber nicht abgemeldet sondern auf der FB aus der Netzwerkliste entfernt, d. h., es kann in der Konfiguration nur hinzugefügt werden, solange es angemeldet ist.
+> Die Action müsste eigentlich "new active" sein
+> für bekannte Gäste-WLAN-Geräte muss eine Konfigurationsseite erstellt werden mit: Devicename, MAC, Owner, WarnOn, WarnOff, Watch
+	Diese Liste dann heranziehen, wenn für ein neues Device kein Geräte in cfgDevices gefunden wird.
+> In ICachedDevice owner aufnehmen, dann dürfte cfgDevices weitgehenst nicht mehr abgerufen werden müssen.
+? Muss Liste gesendet werden oder ist sie per adapter.config.knowWLANdevices abrufbar?
+*/
+
 
 //!P! überlegen, ob jeweils eine 2. "statische" new/removed-Liste mit max-item-count für bessere Visualisierung --> ist eigentlich mit den daily changes abgebildet
 
@@ -41,7 +59,7 @@ Sortierung deviceName case intensitive
 device K3 D8:50:E6:D3:07:87 192.168.200.109 > wird interface Ethernet nicht entfernt, obwohl nicht im Netz
 IP-address for device "influx-01" changed (old: "192.168.200.105"; new: "192.168.200.107"; MAC: "90:1B:0E:BA:80:82" > kann es sein, dass das intern nicht aktualisiert wird?  IPlast
 
-Was wenn angelegtes device watch und warn deaktiviert werden? Device löschen? --> b)
+Was wenn angelegtes device watch, warnOn und warnOff deaktiviert werden? Device löschen? --> b)
 
 
 a)	Option in Konfigurationsseite, ob aktuelle Uhrzeit für lastActive/lastInactive bei Neuanlage eines Gerätes genommen werden soll, 0 ist wahrscheinlich bresser/eindeutig
@@ -58,7 +76,8 @@ c)	Option, ob bei Änderung von MAC/IP eine Warnung gesendet/geloggt werden soll
 
 	Adapterkonfiguration
 		Spalte watch - für dieses Geräte werden DPs angelegt
-		Spalte warn  - geht das Geräte Offline, wird eine Warnung an den konfigurierten Sender gesendet (Off, Log, Telegram)
+		Spalte warnOn  - geht das Geräte online, wird eine Warnung an den konfigurierten Sender gesendet (Off, Log, Telegram)
+		Spalte warnOff  - geht das Geräte Offline, wird eine Warnung an den konfigurierten Sender gesendet (Off, Log, Telegram)
 
 	Initial sind in der deviceList für die Konfiguration deviceName == hostName von der Fritzbox.
 
@@ -164,7 +183,17 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 		//!PI! sonst ist aAllConfiguredDevices eine Referenz auf that.config.devicesList und splice verändert damit auch den Inhalt von that.config.devicesList
 		let aAllConfiguredDevices: c.IDevice[] = JSON.parse(JSON.stringify(that.config.devicesList));
 
-		that.log.silly(fctName + ', config.devicesList (' + that.config.devicesList.length + '): ' + JSON.stringify((that.config.devicesList)));
+		if (that.config.devicesList) {
+			that.log.silly(fctName + ', config.devicesList (' + that.config.devicesList.length + '): ' + JSON.stringify((that.config.devicesList)));
+		} else {
+			that.log.warn(fctName + ', no config.devicesList found, please configure and save the adapter configuration');
+		}
+
+		if (that.config.guestdevicesList) {
+			that.log.silly(fctName + ', config.guestdevicesList: ' + JSON.stringify((that.config.guestdevicesList)));
+		} else {
+			that.log.warn(fctName + ', no config.guestdevicesList found, please configure and save the adapter configuration');
+		}
 		that.log.debug(fctName + ', maCachedDevices (' + maCachedDevices.length + '): ' + JSON.stringify((maCachedDevices)));
 
 		let bActiveChanged: boolean = false;
@@ -201,7 +230,9 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 			Port: 0,
 			Speed: 0,
 			ts: 0,
-			Warn: false,
+			Owner: '',
+			WarnOn: false,
+			WarnOff: false,
 			Watch: false,
 			new: false,
 			changed: false
@@ -223,11 +254,20 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 				that.setStateChangedAsync(c.idFritzBoxIP, jFbDevice.IPAddress);
 				that.setStateChangedAsync(c.idFritzBoxMAC, jFbDevice.MACAddress);
 			} else {
-				// get configured parameter for device like macaddress, watch, warn, ...
-				// [{"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","new":false,"changed":false,"ownername":"","interfacetype":"","warn":false,"watch":false},{"devicename": . . .
-				let jCfgDevice: c.IDevice = <c.IDevice>that.config.devicesList.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === jFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === jFbDevice.IPAddress));});
-				that.log.debug(fctName + ', jCfgDevice: ' + JSON.stringify(jCfgDevice));
+				// get configured parameter for device like macaddress, watch, warnOn, warnOff, ...
+				// [{"devicename":"Acer-NB","macaddress":"00:1C:26:7D:02:D6","ipaddress":"192.168.200.157","new":false,"changed":false,"ownername":"","interfacetype":"","warnOn":false,"warnOFF":false,"watch":false},{"devicename": . . .
+				let jCfgDevice: c.IDevice | null = null;
+				if (that.config.devicesList) {
+					jCfgDevice = <c.IDevice>that.config.devicesList.find((item: c.IDevice) => { return ((item.macaddress && item.macaddress === jFbDevice.MACAddress) || (item.ipaddress && item.ipaddress === jFbDevice.IPAddress));});
+					that.log.debug(fctName + ', jCfgDevice: ' + JSON.stringify(jCfgDevice));
+				}
 
+				let jCfgGuestDevice: c.IGuestDevice | null = null;
+				if (that.config.guestdevicesList) {
+					jCfgGuestDevice = <c.IGuestDevice>that.config.guestdevicesList.find((item: c.IGuestDevice) => { return ((item.macaddress && item.macaddress === jFbDevice.MACAddress));});
+					that.log.debug(fctName + ', jCfgGuestDevice: ' + JSON.stringify(jCfgGuestDevice));
+				}
+				
 				// get device from adapter cache
 				let jCachedDevice: c.ICachedDevice = <c.ICachedDevice>maCachedDevices.find((item: c.ICachedDevice) => { return ((item.MACAddress && item.MACAddress === jFbDevice.MACAddress) || (item.IPAddress && item.IPAddress === jFbDevice.IPAddress));});
 				that.log.debug(fctName + ', jCachedDevice: ' + JSON.stringify(jCachedDevice));
@@ -267,7 +307,9 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 						Port: 0,
 						Speed: 0,
 						ts: (new Date()).getTime(),
-						Warn: false,
+						Owner: '',
+						WarnOn: false,
+						WarnOff: false,
 						Watch: false,
 						new: (bInitialCache ? false : true),
 						changed: false
@@ -296,16 +338,32 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 
 				// check adapter config item exist
 				if(!jCfgDevice) {
-					// new device without adapter config
-					jCachedDevice.DeviceName = jFbDevice.HostName;
-					jCachedDevice.new = true;
-					jCachedDevice.Warn = false;
-					jCachedDevice.Watch = false;
+					if(!jCfgGuestDevice) {
+						// new device without adapter config
+						jCachedDevice.DeviceName = jFbDevice.HostName;
+						jCachedDevice.new = true;
+						jCachedDevice.Owner = '';
+						jCachedDevice.WarnOn = false;
+						jCachedDevice.WarnOff = false;
+						jCachedDevice.Watch = false;
 
-					jChangedDevice.DeviceName = jFbDevice.HostName;
+						jChangedDevice.DeviceName = jFbDevice.HostName;
+					} else {
+						// new device with guest adapter config
+						jCachedDevice.DeviceName = jCfgGuestDevice.devicename;
+						jCachedDevice.new = false;
+						jCachedDevice.Owner = jCfgGuestDevice.ownername;
+						jCachedDevice.WarnOn = jCfgGuestDevice.warnOn;
+						jCachedDevice.WarnOff = jCfgGuestDevice.warnOff;
+						jCachedDevice.Watch = jCfgGuestDevice.watch;
+
+						jChangedDevice.DeviceName = jFbDevice.HostName;
+					}
 				} else {
 					jCachedDevice.DeviceName = jCfgDevice.devicename;
-					jCachedDevice.Warn = jCfgDevice.warn;
+					jCachedDevice.Owner = jCfgDevice.ownername;
+					jCachedDevice.WarnOn = jCfgDevice.warnOn;
+					jCachedDevice.WarnOff = jCfgDevice.warnOff;
 					jCachedDevice.Watch = jCfgDevice.watch;
 
 					jChangedDevice.DeviceName = jCfgDevice.devicename;
@@ -352,7 +410,7 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 
 				if (jFbDevice.Active == "0") {
 					// inactive
-					if (jCfgDevice && jCfgDevice.warn && jCachedDevice.Active) {
+					if (jCfgDevice && jCfgDevice.warnOff && jCachedDevice.Active) {
 						// warn if device goes off
 						that.log.warn('device "' + jCfgDevice.devicename + '" goes off');
 					}
@@ -367,6 +425,16 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 					jChangedDevice.Action = jChangedDevice.Action + 'inactive';
 				} else {
 					// device active
+					if (jCfgDevice && jCfgDevice.warnOn && jCachedDevice.Active) {
+						// warn if device goes online
+						that.log.warn('device "' + jCfgDevice.devicename + '" goes online');
+					}
+
+					if (that.config.warningDestination && jCachedDevice.new && jCfgDevice) {
+						// warn if device new
+						that.log.warn('new device "' + jCfgDevice.devicename + '" detected (ip address: ' + jCfgDevice.ipaddress + ', mac address: ' + jCfgDevice.macaddress + ')');
+					}
+
 					jCachedDevice.Active_lc = (jCachedDevice.Active != true ? (new Date()).getTime() : jCachedDevice.Active_lc);
 					bActiveChanged = (jCachedDevice.Active != true ? true : bActiveChanged);
 					jCachedDevice.Active = true;
@@ -404,7 +472,7 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 						
 						jChangedDevice.Count = (jChangedDevice.ts < ((new Date()).setHours(0, 0, 0, 0)) ? 0 : jChangedDevice.Count + 1);		// start each day with count == 0
 						// update speed, other property is different (if that.config.ignoreSpeed == true)
-						jChangedDevice.Speed = ((jFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(jFbDevice.X_AVM_DE_Speed) : (jChangedDeviceLast ? jChangedDeviceLast.Speed : 0));
+						jChangedDevice.Speed = ((jFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(jFbDevice.X_AVM_DE_Speed) : (jCachedDevice ? jCachedDevice.Speed : 0));
 						jChangedDevice.ts = (new Date()).getTime();
 	
 						//!P! die Frage ist, sollten die Daten in der vorhandenen Zeile aktualisiert werden, ggf. nur bei active oder gelöscht und die neue Werte an den Anfang geschoben werden?
@@ -426,8 +494,8 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 						// add new device info
 						maChangedDevices.unshift(jChangedDevice);
 					}
-				} else {
-					jChangedDevice.Speed = ((jFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(jFbDevice.X_AVM_DE_Speed) : (jChangedDeviceLast ? jChangedDeviceLast.Speed : 0));
+				} else { // no jChangedDeviceLast
+					jChangedDevice.Speed = ((jFbDevice.X_AVM_DE_Speed != '' ) ? parseInt(jFbDevice.X_AVM_DE_Speed) : (jCachedDevice ? jCachedDevice.Speed : 0));
 					jChangedDevice.ts = (new Date()).getTime();
 
 					that.log.silly(fctName + ', add jChangedDevice to maChangedDevices ...');
@@ -455,7 +523,7 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 				that.log.silly(fctName + ', removed device; jCfgDevice: ' + JSON.stringify(jCfgDevice));
 				bDeviceRemoved = true;
 
-				if (jCfgDevice.warn) that.log.warn(fctName + ', following device removed from Fritz!Box network list: ' + JSON.stringify(jCfgDevice));
+				if (jCfgDevice.warnOff) that.log.warn(fctName + ', following device removed from Fritz!Box network list: ' + JSON.stringify(jCfgDevice));
 
 				//!P! ggf, muss hostname der cfgTable im Adapter hinzugefügt werden, wenn das so Probleme macht!?
 				let jChangedDevice: c.IChangedDevice = {
@@ -523,16 +591,16 @@ async function createDeviceStatusLists(that: any, aFbDevices: c.IFbDevice[]) {
 		that.log.debug(fctName + ', aFiltered (device.Active == true && device.Guest == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
 		await that.setStateChangedAsync(c.idDeviceListActiveGuests_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
 
-		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.Warn == true && device.State != c.CachedDevice_State.removed));
-		that.log.debug(fctName + ', aFiltered (device.Warn == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
+		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.WarnOff == true && device.State != c.CachedDevice_State.removed));
+		that.log.debug(fctName + ', aFiltered (device.WarnOff == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
 		await that.setStateChangedAsync(c.idDeviceList_Warn_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
 
-		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.Active == true && device.Warn == true && device.State != c.CachedDevice_State.removed));
-		that.log.debug(fctName + ', aFiltered (device.Active == true && device.Warn == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
+		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.Active == true && device.WarnOn == true && device.State != c.CachedDevice_State.removed));
+		that.log.debug(fctName + ', aFiltered (device.Active == true && device.WarnOn == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
 		await that.setStateChangedAsync(c.idDeviceList_Warn_active_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
 
-		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.Active == false && device.Warn == true && device.State != c.CachedDevice_State.removed));
-		that.log.debug(fctName + ', aFiltered (device.Active == false && device.Warn == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
+		aFiltered = maCachedDevices.filter((device: c.ICachedDevice) => (device.Active == false && device.WarnOff == true && device.State != c.CachedDevice_State.removed));
+		that.log.debug(fctName + ', aFiltered (device.Active == false && device.WarnOff == true && device.State != c.CachedDevice_State.removed): ' + JSON.stringify(aFiltered));
 		await that.setStateChangedAsync(c.idDeviceList_Warn_inactive_JSON, JSON.stringify((aFiltered.length > 0 ? aFiltered : jCachedDummyDevice)));
 
 		//!P! noch benötigt?
@@ -672,6 +740,7 @@ declare global {
 //			dateFormat: string;
 			devicesList: any;
 			devicesListOld: any;
+			guestdevicesList: any;
 			devicesListIPChanged: boolean;
 			devicesListOwnerChanged: boolean;
 			devicesListWarnChanged: boolean;
@@ -1254,7 +1323,8 @@ class FbTr064 extends utils.Adapter {
 								active: jFbDevice.Active,
 								new: ((aCfgDevicesListItem) ? aCfgDevicesListItem.new : false),
 								changed: ((aCfgDevicesListItem) ? aCfgDevicesListItem.changed : false),
-								warn: ((aCfgDevicesListItem) ? aCfgDevicesListItem.warn : false),
+								warnOn: ((aCfgDevicesListItem) ? aCfgDevicesListItem.warnOn : false),
+								warnOff: ((aCfgDevicesListItem) ? aCfgDevicesListItem.warnOff : false),
 								watch: ((aCfgDevicesListItem) ? aCfgDevicesListItem.watch : false),
 								guest: jFbDevice.Guest
 							} as c.IDevice);
@@ -1274,6 +1344,8 @@ class FbTr064 extends utils.Adapter {
 						break;
 					}
 					case 'updateDevicesStatus':
+						const fctNameId: string = 'onMessage "updateDevicesStatus"';
+
 						// stop status scheduler
 						if (mScheduleStatus) clearInterval(mScheduleStatus);
 						mScheduleStatus = null;
@@ -1285,6 +1357,8 @@ class FbTr064 extends utils.Adapter {
 						// reset new and change flags
 						this.config.devicesList.forEach((jDevice: c.IDevice) => {jDevice.new = false; jDevice.changed = false;});
 						maCachedDevices.forEach((jDevice: c.ICachedDevice) => {jDevice.new = false; jDevice.changed = false;});
+
+						this.log.silly(fctNameId + ', config.guestdevicesList: ' + JSON.stringify(this.config.guestdevicesList));
 
 						// process changes in configuration form
 						this.updateDevicesStatus();
@@ -1400,8 +1474,12 @@ async function updateCfgDevices(that: any) {
 						// owner has changed
 						bDataChangedOwner = true;
 					}
-					if (jCfgDeviceOld.warn != jCfgDevice.warn) {
-						// warn has changed
+					if (jCfgDeviceOld.warnOn != jCfgDevice.warnOn) {
+						// warnOn has changed
+						bDataChangedWarn = true;
+					}
+					if (jCfgDeviceOld.warnOff != jCfgDevice.warnOff) {
+						// warnOff has changed
 						bDataChangedWarn = true;
 					}
 					if (jCfgDeviceOld.watch != jCfgDevice.watch) {

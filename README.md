@@ -10,7 +10,7 @@ monitor devices on the Fritz!Box for ioBroker
 
 The adapter reads the network device list from the Fritz! Box and allows
 to change the device name, the assignment to an owner,
-whether the device should be monitored or a warning should be logged when going offline. 
+whether the device should be monitored or a warning should be logged when going on- or offline. 
 Reading out the device list should provide an overview of active / inactive, 
 LAN / WLAN devices and registered guest devices.
 
@@ -47,6 +47,9 @@ to read the fritzbox data.
 ### Select warning on change IP address
 You can choose whether a message is written to the log or to the telegram when the IP address is changed.
 
+### warnNewDeviceOnFB
+If activated and a device is added to the Fritz!Box network list (a. e. a guest device), a warning is sent to the configured receiver (Off, Log, Telegram). This happens regardless of whether the device is being monitored or not.
+
 ### ignoreSpeed
 ignore speed in daily changes list to detect change on an device
 
@@ -79,11 +82,15 @@ only for your information
 Is written as a data point, can be evaluated by other scripts. Used by me for presence detection.
 "guest" is a reserved name for devices known to guests
 
-### warn
-If activated, data points are created for this device and the status (active / inactive) is updated in the query interval.
+### warnOn
+If activated and the device goes active, a warning is sent to the configured receiver (Off, Log, Telegram). This happens regardless of whether the device is being monitored or not.
+Also a warning is sent, if detected a ip address change.
+
+### warnOff
+If activated and the device goes inactive, a warning is sent to the configured receiver (Off, Log, Telegram). This happens regardless of whether the device is being monitored or not.
 
 ### watch
-If activated and the device goes inactive, a warning is sent to the configured receiver (Off, Log, Telegram). This happens regardless of whether the device is being monitored or not.
+If activated, data points are created for this device and the status (active / inactive and other) is updated in the query interval.
 
 
 ## Device Objects
@@ -135,8 +142,11 @@ read port from the Fritzbox
 ### Device Object: speed
 read speed from the Fritzbox
 
-### Device Object: warn
-the value of the setting on the configuration page for warn
+### Device Object: warnOn
+the value of the setting on the configuration page for warnOn
+
+### Device Object: warnOff
+the value of the setting on the configuration page for warnOff
 
 ### Device Object: watch
 the value of the setting on the configuration page for watch
@@ -240,6 +250,14 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.8 (2021-01-02)
+* (greyhound) split warn column in warnOn and warnOf
+* (greyhound) option to enable warning for new network devices in Fritz!Box network list
+
+### 0.4.7 (2020-12-XX)
+* (greyhound) add configuration page for known guest WLAN devices
+* (greyhound) add handling for known guest WLAN devices
+
 ### 0.4.6 (2020-12-18)
 * (greyhound) fix ts, speed for new list items in device change list
 

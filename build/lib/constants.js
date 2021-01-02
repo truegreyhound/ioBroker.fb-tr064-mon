@@ -73,5 +73,6 @@ exports.idnDeviceInterfaceType = 'interfacetype';
 exports.idnDeviceFbPort = 'port';
 exports.idnDeviceFbSpeed = 'speed';
 exports.idnDeviceFbGuest = 'guest';
-exports.idnDeviceFbWarn = 'warn';
+exports.idnDeviceFbWarnOn = 'warnOn';
+exports.idnDeviceFbWarnOff = 'warnOff';
 exports.idnDeviceFbWatch = 'watch';

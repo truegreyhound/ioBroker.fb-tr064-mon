@@ -23,10 +23,10 @@ async function setStateAsyncEx(that, _id, _value, _common, _setValueOnlyStateCre
             native: {},
         })
             .then(async (err, obj) => {
-            that.log.debug(fctName + ', setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(obj) + '; obj:' + JSON.stringify(obj) + '<<<');
+            that.log.debug(fctName + ', setObjectNotExistsAsync, id: ' + _id + '; err:' + JSON.stringify(err) + '; obj:' + JSON.stringify(obj) + '<<<');
             // obj == undefined --> object aleady exist, obj == obj:{"id":"fb-tr064-mon.0.devices.iFranks.IP"} --> created
             if (err)
-                that.log.error('setStateAsyncEx error: ' + JSON.stringify(err));
+                that.log.error(fctName + ', error: ' + JSON.stringify(err));
             if (!(err) && ((obj == undefined) && !(_setValueOnlyStateCreated)) || (obj != undefined)) {
                 // state already exist -->  no value should be set || state new created --> set value
                 if (_setValueDelay > 0) {

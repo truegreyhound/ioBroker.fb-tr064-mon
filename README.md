@@ -250,6 +250,9 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.9 (2021-06-02)
+* (greyhound) enhance device find with interface type
+
 ### 0.4.8 (2021-01-02)
 * (greyhound) split warn column in warnOn and warnOf
 * (greyhound) option to enable warning for new network devices in Fritz!Box network list

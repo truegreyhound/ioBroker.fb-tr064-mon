@@ -7,6 +7,8 @@
 		"allowJs": false,
 		"checkJs": false,
 
+		"sourceMap": true,				/* Generates corresponding '.map' file. */
+
 		"declaration": false	//,
 //		"rootDir": "./src"
 	},

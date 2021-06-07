@@ -159,7 +159,7 @@ class Fb {
             const sFB_name = result.root.device.friendlyName;
             const sFB_modell = result.root.device.modelDescription;
             that.log.debug(fctName + ', version: ' + sFB_version + '; sFB_name: ' + sFB_name + '; sFB_modell: ' + sFB_modell);
-            that.setStateAsync(c.idFritzBoxVersion, sFB_version);
+            that.setStateAsync(c.idFritzBoxVersion, sFB_version, true);
             that.setStateChangedAsync(c.idFritzBoxName, sFB_name, true);
             that.name = sFB_name;
             // read from adapter states
@@ -513,3 +513,4 @@ class Fb {
     }
 } // soapAction()
 exports.Fb = Fb;
+//# sourceMappingURL=fb.js.map

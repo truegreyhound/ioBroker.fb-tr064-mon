@@ -307,11 +307,11 @@ export async function check_set_deviceData(that: any, jCfgDevice: c.IDevice, jCa
 			if(idStateValue) {
 				idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 
-				that.setStateAsync(idState, dtCurrent);
+				that.setStateAsync(idState, dtCurrent, true);
 			} else {
 				idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
 
-				that.setStateAsync(idState, dtCurrent);
+				that.setStateAsync(idState, dtCurrent, true);
 			}
 			that.log.debug(fctNameId + ', idState "' + idState + '"; set value dtCurrent while state changed: "' + dtCurrent + '" (' + that.formatDate(dtCurrent, 'YYYY.MM.DD SS:mm:ss'));
 		} else {
@@ -341,11 +341,11 @@ export async function check_set_deviceData(that: any, jCfgDevice: c.IDevice, jCa
 								if(idStateValue) {
 									idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastActive;
 					
-									that.setStateAsync(idState, dtCurrent);
+									that.setStateAsync(idState, dtCurrent, true);
 								} else {
 									idState = c.dppDevices + jCfgDevice.devicename + '.' + c.idnDeviceLastInactive;
 					
-									that.setStateAsync(idState, dtCurrent);
+									that.setStateAsync(idState, dtCurrent, true);
 								}
 								that.log.debug(fctNameId + ', idState "' + idState + '"; set value dtCcurrent while date active/inactive inconsistent: "' + dtCurrent + '" (' + that.formatDate(dtCurrent, 'YYYY.MM.DD SS:mm:ss'));
 							}

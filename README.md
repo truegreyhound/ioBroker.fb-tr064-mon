@@ -250,6 +250,11 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.10 (2021-06-06)
+* (greyhound) remove enhance device find with interface type
+* (greyhound) some small fixes
+* (greyhound) fix setStateChangedAsync, setStateAsync with ack = true
+
 ### 0.4.9 (2021-06-02)
 * (greyhound) enhance device find with interface type
 

@@ -16,8 +16,16 @@
             "type": "shell",
             "command": "./scripts/copy2ioBroker02.sh",
             "windows": {
-              "command": ".\\scripts\\copy2ioBroker02.cmd"
-            },
+                "command": ".\\scripts\\copy2ioBroker02.cmd"
+            }
+        },
+        {
+            "type": "npm",
+            "script": "build:ts",
+            "group": "build",
+            "problemMatcher": [],
+            "label": "npm: build:ts",
+            "detail": "tsc -p tsconfig.build.json --listEmittedFiles"
         }
     ]
 }

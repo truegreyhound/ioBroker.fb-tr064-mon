@@ -76,7 +76,6 @@ async function translateYandex(text, targetLang, apiKey) {
  * @param targetLang The target languate
  */
 async function translateGoogle(text, targetLang) {
-    var _a;
     try {
         const url = `http://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}&ie=UTF-8&oe=UTF-8`;
         const response = await axios_1.default({ url, timeout: 15000 });
@@ -86,13 +85,15 @@ async function translateGoogle(text, targetLang) {
         }
         throw new Error("Invalid response for translate request");
     }
-    catch (e) {
-        if (((_a = e.response) === null || _a === void 0 ? void 0 : _a.status) === 429) {
-            throw new Error(`Could not translate to "${targetLang}": Rate-limited by Google Translate`);
-        }
-        else {
+    catch (err) {
+        /*!P!if (e.response?.status === 429) {
+            throw new Error(
+                `Could not translate to "${targetLang}": Rate-limited by Google Translate`
+            );
+        } else {
             throw new Error(`Could not translate to "${targetLang}": ${e}`);
-        }
+        } */
+        throw new Error(`Could not translate to "${targetLang}": ${err}`);
     }
 }
 //# sourceMappingURL=tools.js.map

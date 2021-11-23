@@ -3,7 +3,10 @@
         "name": "fb-tr064-mon",
         "version": "0.4.10",
         "news": {
-            "0.4.10": {
+            "0.4.11": {
+                "en": "correct warning if device goes active and warning is enabled, some small fixes"
+            },
+             "0.4.10": {
                 "en": "remove enhance device find with interface type, some small fixes"
             },
             "0.4.9": {

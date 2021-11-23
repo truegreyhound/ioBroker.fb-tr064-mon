@@ -445,9 +445,9 @@ class Fb {
                                                 //this.that.log.debug('soapAction, soap2 ' + device._auth.chCount + ' ' + JSON.stringify(resp));
                                                 resolve(resp);
                                             }
-                                            catch (e) {
-                                                that.log.error('fb.soapAction, challenge, error: ' + ((e.message) ? e.message : JSON.stringify(resp)));
-                                                reject('fb.soapAction, challenge, error: ' + ((e.message) ? e.message : JSON.stringify(resp)));
+                                            catch (err) {
+                                                that.log.error('fb.soapAction, challenge, error: ${err}' + JSON.stringify(err) ? err : JSON.stringify(resp));
+                                                reject('fb.soapAction, challenge, error: ' + ((err) ? err : JSON.stringify(resp)));
                                             }
                                         }
                                     }
@@ -508,7 +508,7 @@ class Fb {
             });
         }
         catch (e) {
-            this.that.log.error('fb.soapAction, error: ' + e.message);
+            this.that.log.error('fb.soapAction, error: ${e}');
         }
     }
 } // soapAction()

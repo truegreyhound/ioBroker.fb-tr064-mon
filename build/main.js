@@ -20,6 +20,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
     >> es scheint "nur" Anmeldung mit User/Password pflicht zu sein
 */
+/*!P! es kann passieren, dass mehr als 1 inaktives Gerät dieselbe IP in der Fritz!Box-Liste haben, dann kann z. B. für DeviceName "EG-PM2-LAN-01" und IP 192.168.200.131 als Hostname "iPhonevonFrank" "ermittelt" werden
+    besser wäre eine bei inaktiven Geräten eine Prüfung ob mehr als 2 Namen (device || hostname) zurückgegeben werden und eine entsprechende Fehlermeldung (Hinweis) ausgegeben bzw. der "richtige" Name aus einer
+    anderen Liste "validiert" wird */
 //!P! owner wurde in DP nach Änderung auf CfgSeite nicht aktualisiert!?
 /*!P! FB-verhalten mit Gäste-WLAN
 DeviceName			Active	Active_lc			Inactive_lc	HostName	HostName_lc	IPAddress	IPAddress_lc MACAddress	 		Interfacetype	Guest	Port	Speed	ts					Count	Action
@@ -124,8 +127,8 @@ async function getDeviceList(that, Fb) {
         that.log.debug(fctName + ' finished');
         return deviceList['List']['Item'];
     }
-    catch (e) {
-        that.log.error(fctName + ': ' + e.message);
+    catch (err) {
+        that.log.error(fctName + ': ' + err);
         return null;
     }
     that.log.debug(fctName + ' finished undefined');
@@ -384,7 +387,7 @@ async function createDeviceStatusLists(that, aFbDevices) {
                 }
                 else {
                     // device active
-                    if (jCfgDevice && jCfgDevice.warnOn && jFbCachedDevice.Active) {
+                    if (jCfgDevice && jCfgDevice.warnOn && !jFbCachedDevice.Active) {
                         // warn if device went online
                         that.log.warn('device "' + jCfgDevice.devicename + '" went online');
                     }
@@ -624,12 +627,12 @@ async function createDeviceStatusLists(that, aFbDevices) {
         await that.setStateChangedAsync(c.idDeviceList_OwnerChanged, (that.config.devicesListOwnerChanged) ? that.config.devicesListOwnerChanged : false, true);
         await that.setStateChangedAsync(c.idDeviceList_WarnChanged, (that.config.devicesListWarnChanged) ? that.config.devicesListWarnChanged : false, true);
         await that.setStateChangedAsync(c.idDeviceList_WatchChanged, (that.config.devicesListWatchChanged) ? that.config.devicesListWatchChanged : false, true);
-        await that.setStateChangedAsync(c.idDeviceList_ActiveChanged, bActiveChanged);
+        await that.setStateChangedAsync(c.idDeviceList_ActiveChanged, bActiveChanged, true);
         //!P! ggf. DP for lastRun, allerdings ist das auch an den ts der JSON Listen zu erkennen
         that.setState('info.connection', true, true);
     }
-    catch (e) {
-        that.log.error(fctName + ': ' + e.message);
+    catch (err) {
+        that.log.error(fctName + ': ' + err);
     }
     that.log.debug(fctName + ' finished');
 } // createDeviceStatusLists()
@@ -760,9 +763,9 @@ class FbTr064 extends utils.Adapter {
                 //			});
             }
         }
-        catch (e) {
+        catch (err) {
             this.setState('info.connection', { val: false, ack: true });
-            this.log.error('onReady: ' + e.message);
+            this.log.error('onReady: ' + err);
         }
         this.log.debug('onReady finished');
     } // onReady()
@@ -1155,8 +1158,8 @@ class FbTr064 extends utils.Adapter {
                 //!P! ?? return true;    
             }
         }
-        catch (e) {
-            this.log.error('onMessage: ' + e.message);
+        catch (err) {
+            this.log.error('onMessage: ' + err);
         }
     }
 } // onMessage()

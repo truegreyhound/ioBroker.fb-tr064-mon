@@ -250,6 +250,10 @@ OS version of the Fritzbox
 
 
 ## Changelog
+### 0.4.11 (2021-06-06)
+* (greyhound) correct warning if device goes active and warning is enabled
+* (greyhound) Read-only state "fb-tr064-mon.0.devices.deviceList_active_changed" has been written without ack-flag with value "true"
+
 ### 0.4.10 (2021-06-06)
 * (greyhound) remove enhance device find with interface type
 * (greyhound) some small fixes
